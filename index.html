@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Physics Universe Simulator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>3D Coin Rolling on a Plane (Top View)</title>
   <style>
     body {
       margin: 0;
       padding: 0;
       background: #000011;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       overflow: hidden;
       color: white;
     }
-    
+
     #controls {
       position: fixed;
       top: 10px;
@@ -29,16 +29,16 @@
       font-size: 14px;
       transition: all 0.3s ease;
     }
-    
+
     #controls.minimized {
       max-height: 50px;
       overflow: hidden;
     }
-    
+
     #controls.minimized .control-content {
       display: none;
     }
-    
+
     #minimizeBtn {
       position: absolute;
       top: 10px;
@@ -51,82 +51,23 @@
       cursor: pointer;
       font-size: 12px;
     }
-    
+
     @media (max-width: 768px) {
-      #controls {
-        top: 5px;
-        left: 5px;
-        right: 5px;
-        padding: 10px;
-        font-size: 12px;
-        max-height: 50vh;
-      }
-      
-      .control-group {
-        margin: 8px 0;
-      }
-      
-      label {
-        font-size: 11px;
-        margin-bottom: 3px;
-      }
-      
-      select, input {
-        width: 100%;
-        padding: 6px;
-        font-size: 12px;
-      }
-      
-      .button {
-        padding: 8px 12px;
-        font-size: 11px;
-        margin: 3px;
-      }
+      #controls { top: 5px; left: 5px; right: 5px; padding: 10px; font-size: 12px; max-height: 50vh; }
+      .control-group { margin: 8px 0; }
+      label { font-size: 11px; margin-bottom: 3px; }
+      select, input { width: 100%; padding: 6px; font-size: 12px; }
+      .button { padding: 8px 12px; font-size: 11px; margin: 3px; }
     }
-    
-    .control-group {
-      margin: 8px 0;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .control-row {
-      display: flex;
-      gap: 15px;
-      align-items: flex-start;
-    }
-    
-    .control-column {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 5px;
-      color: #88aaff;
-      font-weight: bold;
-    }
-    
-    select, input {
-      width: 100%;
-      max-width: 200px;
-      padding: 8px;
-      border-radius: 5px;
-      border: 1px solid #4444ff;
-      background: #001122;
-      color: white;
-      font-size: 14px;
-    }
-    
+
+    .control-group { margin: 8px 0; display: flex; flex-direction: column; }
+    .control-row { display: flex; gap: 15px; align-items: flex-start; }
+    .control-column { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    label { display: block; margin-bottom: 5px; color: #88aaff; font-weight: bold; }
+    select, input { width: 100%; max-width: 220px; padding: 8px; border-radius: 5px; border: 1px solid #4444ff; background: #001122; color: white; font-size: 14px; }
+
     .button {
       background: linear-gradient(45deg, #4444ff, #8888ff);
       border: none;
@@ -137,521 +78,471 @@
       margin: 5px;
       font-weight: bold;
     }
-    
-    .button:hover {
-      background: linear-gradient(45deg, #6666ff, #aaaaff);
+
+    .button:hover { background: linear-gradient(45deg, #6666ff, #aaaaff); }
+
+    .copyright {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: #6666aa;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+      z-index: 100;
+      background: rgba(0,0,0,0.7);
+      padding: 5px 10px;
+      border-radius: 5px;
     }
-    
 
-    
-    .planet {
-      position: absolute;
-      border-radius: 50%;
-      box-shadow: 0 0 10px currentColor;
-          }
-      
-      .copyright {
-        text-align: center;
-        color: #6666aa;
-        font-size: 12px;
-        margin-top: 20px;
-        font-family: 'Arial', sans-serif;
-      }
-      
-      .copyright a {
-        color: #8888cc;
-        text-decoration: none;
-      }
-      
-             .copyright a:hover {
-         text-decoration: underline;
-       }
-       
-
-      
-      .copyright {
-        position: fixed;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        text-align: center;
-        color: #6666aa;
-        font-size: 12px;
-        font-family: 'Arial', sans-serif;
-        z-index: 100;
-        background: rgba(0,0,0,0.7);
-        padding: 5px 10px;
-        border-radius: 5px;
-      }
-   </style>
- </head>
- <body>
+    .legend {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.6);
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #334;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
   <div id="controls">
     <button id="minimizeBtn" onclick="toggleControls()">-</button>
-    <h3>Universe Controls</h3>
+    <h3>3D Rolling Coin (Top View Projection)</h3>
     <div class="control-content">
-    
-        <div class="control-row">
-      <div class="control-column">
-        <div class="control-group">
-          <label>Force Law:</label>
-                     <select id="forceLaw">
-                            <option value="1/r3">1/r³</option>
-               <option value="1/r2">1/r²</option>
-               <option value="1/r">1/r</option>
-               <option value="log" selected>log(r)</option>
-               <option value="constant">1</option>
-               <option value="sqrt">√r</option>
-               <option value="r">r</option>
-               <option value="r2">r²</option>
-               <option value="r3">r³</option>
-           </select>
+      <div class="control-row">
+        <div class="control-column">
+          <div class="control-group">
+            <label>Mass m</label>
+            <input type="range" id="mass" min="0.1" max="10" step="0.1" value="1.0" />
+            <span id="massValue">1.0</span>
+          </div>
+          <div class="control-group">
+            <label>Radius R (px)</label>
+            <input type="range" id="radius" min="20" max="150" step="1" value="60" />
+            <span id="radiusValue">60</span>
+          </div>
+          <div class="control-group">
+            <label>Thickness h (px)</label>
+            <input type="range" id="thickness" min="1" max="40" step="1" value="8" />
+            <span id="thicknessValue">8</span>
+          </div>
+          <div class="control-group">
+            <label>Time Scale</label>
+            <input type="range" id="timeScale" min="0.1" max="30" step="0.1" value="3" />
+            <span id="timeScaleValue">3.0</span>
+          </div>
         </div>
-        
-        <div class="control-group">
-          <label>Force Constant (G):</label>
-          <input type="range" id="gravityConst" min="0.1" max="5" step="0.1" value="1">
-          <span id="gravityValue">1.0</span>
+        <div class="control-column">
+          <div class="control-group">
+            <label>Angular Momentum Lx</label>
+            <input type="range" id="Lx" min="-400" max="400" step="1" value="0" />
+            <span id="LxValue">0</span>
+          </div>
+          <div class="control-group">
+            <label>Angular Momentum Ly</label>
+            <input type="range" id="Ly" min="-400" max="400" step="1" value="200" />
+            <span id="LyValue">200</span>
+          </div>
+          <div class="control-group">
+            <label>Angular Momentum Lz</label>
+            <input type="range" id="Lz" min="-400" max="400" step="1" value="0" />
+            <span id="LzValue">0</span>
+          </div>
+        </div>
+        <div class="control-column">
+          <div class="control-group">
+            <label>Initial Tilt θ (deg)</label>
+            <input type="range" id="tilt" min="0" max="90" step="1" value="80" />
+            <span id="tiltValue">80</span>
+          </div>
+          <div class="control-group">
+            <label>Heading ψ (deg)</label>
+            <input type="range" id="heading" min="0" max="360" step="1" value="0" />
+            <span id="headingValue">0</span>
+          </div>
+          <div class="control-group">
+            <label>Initial Spin Phase φ (deg)</label>
+            <input type="range" id="spinPhase" min="0" max="360" step="1" value="0" />
+            <span id="spinPhaseValue">0</span>
+          </div>
         </div>
       </div>
-      
-      <div class="control-column">
-        <div class="control-group">
-          <label>Time Scale:</label>
-          <input type="range" id="timeScale" min="0.1" max="30" step="0.1" value="3">
-          <span id="timeValue">3.0</span>
-        </div>
-        
-        <div class="control-group">
-          <label>Initial Angular Momentum:</label>
-                  <input type="range" id="angularSpeed" min="0" max="10" step="0.1" value="1.0">
-        <span id="angularValue">1.0</span>
-        </div>
+
+      <div class="button-row">
+        <button class="button" onclick="resetSimulation()">Reset</button>
+        <button class="button" onclick="togglePause()">Pause</button>
+        <button class="button" onclick="toggleTrails()">Trails</button>
+        <button class="button" onclick="randomizeL()">Random L</button>
+      </div>
+
+      <div>
+        <small>
+          Model: Rigid disk with principal inertias I⊥ = ¼ mR² + (1/12) m h², I∥ = ½ mR². World-space angular momentum L is constant (no torques). Orientation integrates via quaternion. No-slip speed: v = R·sinθ·(ω·n) along t = normalize(n × ẑ). Projection: orthographic top view draws the tilted circle as an ellipse.
+        </small>
       </div>
     </div>
-     
-                <div class="button-row">
-       <button class="button" onclick="resetUniverse()">Reset</button>
-       <button class="button" onclick="togglePause()">Pause</button>
-       <button class="button" onclick="randomizeVelocities()">Random All</button>
-       <button class="button" onclick="toggleTrajectories()">Trails</button>
-     </div>
-   </div>
-   </div>
-   
-        <div class="copyright">
-      © M.Zaiss'25, <a href="https://github.com/mzaiss/galactic_forces" target="_blank">github.com/mzaiss/galactic_forces</a> | <a href="matrix.html">3x3</a> | <a href="coin.html" target="_blank">Coin</a>
-   </div>
-  
+  </div>
 
+  <div class="legend">Keys: Space = Pause, T = Trails, R = Reset</div>
+  <div class="copyright">© M.Zaiss'25 · 3D Coin · <a href="coin.html" target="_blank" style="color:#8888cc; text-decoration:none;">2D No-Slip</a></div>
 
   <script>
+    // Canvas setup
     const canvas = document.createElement('canvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     document.body.appendChild(canvas);
     const ctx = canvas.getContext('2d');
-    
-         // Universe parameters
-     let G = 1.0;
-     let timeScale = 3.0;
-     let planetMass = 1.0;
-     let angularSpeed = 1.0;
-           let forceLaw = 'log';
-      let isPaused = false;
-      let simulationTime = 0;
-      let showTrajectories = false;
-    
-         // Planet grid - adjust spacing for mobile
-     const gridSize = 20; // Always 20 planets
-     const planetSpacing = window.innerWidth < 768 ? 20 : 30; // Smaller spacing on mobile
-    const planets = [];
-    
-         // Initialize planets in a grid
-     function initializePlanets() {
-       planets.length = 0;
-       const startX = (canvas.width - (gridSize - 1) * planetSpacing) / 2;
-       const startY = (canvas.height - (gridSize - 1) * planetSpacing) / 2 + canvas.height * 0.2; // Move center 20% down
-       
-       // Calculate center of the universe (moved 20% down)
-       const centerX = canvas.width / 2;
-       const centerY = canvas.height / 2 + canvas.height * 0.2;
-       
-       for (let i = 0; i < gridSize; i++) {
-         for (let j = 0; j < gridSize; j++) {
-           const x = startX + i * planetSpacing;
-           const y = startY + j * planetSpacing;
-           
-           // Calculate distance from center
-           const dx = x - centerX;
-           const dy = y - centerY;
-           const distance = Math.sqrt(dx * dx + dy * dy);
-           
-                       // Add angular momentum (tangential velocity)
-            let vx = 0, vy = 0;
-            
-            if (distance > 0) {
-              // Perpendicular velocity for rotation (tangential)
-              vx = (-dy / distance) * angularSpeed * distance * 0.01;
-              vy = (dx / distance) * angularSpeed * distance * 0.01;
-            }
-           
-                      // Calculate color based on initial distance from center (radial symmetry)
-            const maxDistance = Math.sqrt((canvas.width/2) * (canvas.width/2) + (canvas.height/2) * (canvas.height/2));
-            const initialDistance = distance; // Store the initial distance
-            const colorHue = (initialDistance / maxDistance) * 360; // Hue based on initial distance
-            const colorSaturation = 100; // Saturation increases with initial distance
-            const colorLightness = 50 - (initialDistance / maxDistance) * 20; // Brightness decreases with initial distance
-            
-            planets.push({
-              x: x,
-              y: y,
-              vx: vx,
-              vy: vy,
-              mass: planetMass,
-              radius: 3,
-              initialDistance: initialDistance, // Store for reference
-              color: `hsl(${colorHue}, ${colorSaturation}%, ${colorLightness}%)`
-            });
-         }
-       }
-     }
-    
-    // Calculate force based on selected law
-    function calculateForce(r, forceLaw) {
-      if (r < 0.1) r = 0.1; // Prevent division by zero
-      
-             switch(forceLaw) {
-         case '1/r3':
-           return 1 / (r * r * r);
-         case '1/r':
-           return 1 / r;
-         case '1/r2':
-           return 1 / (r * r);
-         case 'r':
-           return r;
-         case 'log':
-           return Math.log(r + 1);
-         case 'constant':
-           return 1;
-         case 'r2':
-           return r * r;
-         case 'r3':
-           return r * r * r;
-         case 'sqrt':
-           return Math.sqrt(r);
-         default:
-           return 1 / r;
-       }
+
+    // UI elements
+    const massEl = document.getElementById('mass');
+    const radiusEl = document.getElementById('radius');
+    const thicknessEl = document.getElementById('thickness');
+    const timeEl = document.getElementById('timeScale');
+    const LxEl = document.getElementById('Lx');
+    const LyEl = document.getElementById('Ly');
+    const LzEl = document.getElementById('Lz');
+    const tiltEl = document.getElementById('tilt');
+    const headingEl = document.getElementById('heading');
+    const spinPhaseEl = document.getElementById('spinPhase');
+
+    function syncLabels() {
+      document.getElementById('massValue').textContent = Number(massEl.value).toFixed(1);
+      document.getElementById('radiusValue').textContent = Number(radiusEl.value).toFixed(0);
+      document.getElementById('thicknessValue').textContent = Number(thicknessEl.value).toFixed(0);
+      document.getElementById('timeScaleValue').textContent = Number(timeEl.value).toFixed(1);
+      document.getElementById('LxValue').textContent = Number(LxEl.value).toFixed(0);
+      document.getElementById('LyValue').textContent = Number(LyEl.value).toFixed(0);
+      document.getElementById('LzValue').textContent = Number(LzEl.value).toFixed(0);
+      document.getElementById('tiltValue').textContent = Number(tiltEl.value).toFixed(0);
+      document.getElementById('headingValue').textContent = Number(headingEl.value).toFixed(0);
+      document.getElementById('spinPhaseValue').textContent = Number(spinPhaseEl.value).toFixed(0);
     }
-    
-                   // Update planet physics using optimized Leapfrog algorithm
-      function updatePlanets(dt) {
-        if (isPaused) return;
-        
-        const dt_scaled = dt * timeScale;
-        const dt_half = dt_scaled * 0.5;
-        
-        // Pre-calculate normalization factor once
-        let normalizationFactor = 1.0;
-        if (planets.length > 1) {
-          let totalForceOnFirst = 0;
-          for (let j = 1; j < planets.length; j++) {
-            const dx = planets[j].x - planets[0].x;
-            const dy = planets[j].y - planets[0].y;
-            const r = Math.sqrt(dx * dx + dy * dy);
-            if (r > 0.1) { // Avoid division by zero
-              const cutoffDistance = planets[0].radius * 4;
-              if (r > cutoffDistance) { // Only apply force if distance > radius*2
-                totalForceOnFirst += 1.0 * calculateForce(r, forceLaw); // Use G=1 for normalization
-              }
-            }
-          }
-          if (totalForceOnFirst > 0) {
-            normalizationFactor = 1.0 / totalForceOnFirst;
-          }
-        }
-        
-        // Pre-calculate common values
-        const G_normalized = G * normalizationFactor;
-        
-        // Step 1: Update velocities by half step
-        for (let i = 0; i < planets.length; i++) {
-          let fx = 0, fy = 0;
-          const planet_i = planets[i];
-          const mass_i = planet_i.mass;
-          
-          for (let j = 0; j < planets.length; j++) {
-            if (i === j) continue;
-            
-            const planet_j = planets[j];
-            const dx = planet_j.x - planet_i.x;
-            const dy = planet_j.y - planet_i.y;
-            const r_squared = dx * dx + dy * dy;
-            
-            if (r_squared > 0.1) { // Avoid division by zero
-              const r = Math.sqrt(r_squared);
-              const cutoffDistance = planet_i.radius * 4;
-              
-              if (r > cutoffDistance) { // Only apply force if distance > radius*2
-                const force = G_normalized * calculateForce(r, forceLaw);
-                const force_over_r = force / r;
-                
-                fx += dx * force_over_r;
-                fy += dy * force_over_r;
-              }
-            }
-          }
-          
-          // Update velocities by half step (F = ma)
-          planet_i.vx += (fx / mass_i) * dt_half;
-          planet_i.vy += (fy / mass_i) * dt_half;
-        }
-        
-        // Step 2: Update positions by full step
-        for (let planet of planets) {
-          planet.x += planet.vx * dt_scaled;
-          planet.y += planet.vy * dt_scaled;
-          
-          // Planets can travel to infinity - no wall bouncing
-        }
-        
-        // Step 3: Update velocities by another half step
-        for (let i = 0; i < planets.length; i++) {
-          let fx = 0, fy = 0;
-          const planet_i = planets[i];
-          const mass_i = planet_i.mass;
-          
-          for (let j = 0; j < planets.length; j++) {
-            if (i === j) continue;
-            
-            const planet_j = planets[j];
-            const dx = planet_j.x - planet_i.x;
-            const dy = planet_j.y - planet_i.y;
-            const r_squared = dx * dx + dy * dy;
-            
-            if (r_squared > 0.1) { // Avoid division by zero
-              const r = Math.sqrt(r_squared);
-              const cutoffDistance = planet_i.radius *4;
-              
-              if (r > cutoffDistance) { // Only apply force if distance > radius*2
-                const force = G_normalized * calculateForce(r, forceLaw);
-                const force_over_r = force / r;
-                
-                fx += dx * force_over_r;
-                fy += dy * force_over_r;
-              }
-            }
-          }
-          
-          // Update velocities by half step (F = ma)
-          planet_i.vx += (fx / mass_i) * dt_half;
-          planet_i.vy += (fy / mass_i) * dt_half;
-        }
-      }
-    
-         // Draw planets with camera transform
-     function drawPlanets() {
-       // Only clear canvas if trajectories are disabled
-       if (!showTrajectories) {
-         ctx.clearRect(0, 0, canvas.width, canvas.height);
-       }
-       
-       // Apply camera transform
-       ctx.save();
-       ctx.translate(cameraX, cameraY);
-       ctx.scale(cameraZoom, cameraZoom);
-       
-       // Draw planets with fade effect for trajectories
-       for (let planet of planets) {
-         if (showTrajectories) {
-           // Draw with transparency for trajectory effect
-           ctx.fillStyle = planet.color.replace(')', ', 0.3)').replace('hsl', 'hsla');
-         } else {
-           ctx.fillStyle = planet.color;
-         }
-         ctx.beginPath();
-         ctx.arc(planet.x, planet.y, planet.radius, 0, Math.PI * 2);
-         ctx.fill();
-       }
-       
-       // Restore camera transform
-       ctx.restore();
-     }
-    
-    
-    
-    // Event listeners
-    document.getElementById('forceLaw').addEventListener('change', (e) => {
-      forceLaw = e.target.value;
-    });
-    
-    document.getElementById('gravityConst').addEventListener('input', (e) => {
-      G = parseFloat(e.target.value);
-      document.getElementById('gravityValue').textContent = G.toFixed(1);
-    });
-    
-    document.getElementById('timeScale').addEventListener('input', (e) => {
-      timeScale = parseFloat(e.target.value);
-      document.getElementById('timeValue').textContent = timeScale.toFixed(1);
-    });
-    
-    document.getElementById('angularSpeed').addEventListener('input', (e) => {
-      angularSpeed = parseFloat(e.target.value);
-      document.getElementById('angularValue').textContent = angularSpeed.toFixed(1);
-    });
-    
-                   function resetUniverse() {
-        // Read current values from UI controls
-        angularSpeed = parseFloat(document.getElementById('angularSpeed').value);
-        G = parseFloat(document.getElementById('gravityConst').value);
-        timeScale = parseFloat(document.getElementById('timeScale').value);
-        forceLaw = document.getElementById('forceLaw').value;
-        
-        // Update display values
-        document.getElementById('angularValue').textContent = angularSpeed.toFixed(1);
-        document.getElementById('gravityValue').textContent = G.toFixed(1);
-        document.getElementById('timeValue').textContent = timeScale.toFixed(1);
-        
-        // Reset camera view
-        cameraX = 0;
-        cameraY = 0;
-        cameraZoom = 1.0;
-        
-        initializePlanets();
-        simulationTime = 0;
-      }
-    
-    function togglePause() {
-      isPaused = !isPaused;
-    }
-    
-         function randomizeVelocities() {
-       // Calculate the original grid boundaries
-       const startX = (canvas.width - (gridSize - 1) * planetSpacing) / 2;
-       const startY = (canvas.height - (gridSize - 1) * planetSpacing) / 2;
-       const endX = startX + (gridSize - 1) * planetSpacing;
-       const endY = startY + (gridSize - 1) * planetSpacing;
-       
-       for (let planet of planets) {
-         // Random positions within the original square grid area
-         planet.x = startX + Math.random() * (endX - startX);
-         planet.y = startY + Math.random() * (endY - startY);
-         
-         // Random velocities
-         planet.vx = (Math.random() - 0.5) * 2;
-         planet.vy = (Math.random() - 0.5) * 2;
-       }
-     }
-     
-         function toggleTrajectories() {
-      showTrajectories = !showTrajectories;
-      if (!showTrajectories) {
-        // Clear canvas when turning off trajectories
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    }
-    
+
+    massEl.addEventListener('input', syncLabels);
+    radiusEl.addEventListener('input', syncLabels);
+    thicknessEl.addEventListener('input', syncLabels);
+    timeEl.addEventListener('input', () => { paramTimeScale = Number(timeEl.value); syncLabels(); });
+    LxEl.addEventListener('input', syncLabels);
+    LyEl.addEventListener('input', syncLabels);
+    LzEl.addEventListener('input', syncLabels);
+    tiltEl.addEventListener('input', syncLabels);
+    headingEl.addEventListener('input', syncLabels);
+    spinPhaseEl.addEventListener('input', syncLabels);
+
     function toggleControls() {
       const controls = document.getElementById('controls');
       const btn = document.getElementById('minimizeBtn');
       controls.classList.toggle('minimized');
       btn.textContent = controls.classList.contains('minimized') ? '+' : '-';
     }
-    
-    // Handle window resize
+
+    function togglePause() { isPaused = !isPaused; }
+
+    function toggleTrails() {
+      showTrails = !showTrails;
+      if (!showTrails) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function randomizeL() {
+      L_world[0] = (Math.random() * 800 - 400);
+      L_world[1] = (Math.random() * 800 - 400);
+      L_world[2] = (Math.random() * 800 - 400);
+      LxEl.value = L_world[0].toFixed(0);
+      LyEl.value = L_world[1].toFixed(0);
+      LzEl.value = L_world[2].toFixed(0);
+      syncLabels();
+    }
+
+    // Math helpers
+    function vec3(x=0,y=0,z=0){ return new Float64Array([x,y,z]); }
+    function add(a,b){ return vec3(a[0]+b[0], a[1]+b[1], a[2]+b[2]); }
+    function sub(a,b){ return vec3(a[0]-b[0], a[1]-b[1], a[2]-b[2]); }
+    function mul(a,s){ return vec3(a[0]*s, a[1]*s, a[2]*s); }
+    function dot(a,b){ return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+    function cross(a,b){ return vec3(a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]); }
+    function norm(a){ return Math.hypot(a[0], a[1], a[2]); }
+    function normalize(a){ const n = norm(a) || 1; return vec3(a[0]/n, a[1]/n, a[2]/n); }
+
+    function quat(w=1,x=0,y=0,z=0){ return new Float64Array([w,x,y,z]); }
+    function quatMul(q1,q2){
+      const [w1,x1,y1,z1] = q1, [w2,x2,y2,z2]=q2;
+      return quat(
+        w1*w2 - x1*x2 - y1*y2 - z1*z2,
+        w1*x2 + x1*w2 + y1*z2 - z1*y2,
+        w1*y2 - x1*z2 + y1*w2 + z1*x2,
+        w1*z2 + x1*y2 - y1*x2 + z1*w2
+      );
+    }
+    function quatNormalize(q){
+      const n = Math.hypot(q[0],q[1],q[2],q[3]) || 1;
+      q[0]/=n; q[1]/=n; q[2]/=n; q[3]/=n; return q;
+    }
+    function quatFromAxisAngle(axis, angle){
+      const a = normalize(axis);
+      const s = Math.sin(angle/2);
+      return quat(Math.cos(angle/2), a[0]*s, a[1]*s, a[2]*s);
+    }
+    function quatRotate(q, v){
+      // v' = q * (0,v) * q^{-1}
+      const [w,x,y,z] = q;
+      const vx = v[0], vy = v[1], vz = v[2];
+      // Compute via optimized formula
+      const ix =  w*vx + y*vz - z*vy;
+      const iy =  w*vy + z*vx - x*vz;
+      const iz =  w*vz + x*vy - y*vx;
+      const iw = -x*vx - y*vy - z*vz;
+      return vec3(
+        ix*w + iw*-x + iy*-z - iz*-y,
+        iy*w + iw*-y + iz*-x - ix*-z,
+        iz*w + iw*-z + ix*-y - iy*-x
+      );
+    }
+    function quatConjugate(q){ return quat(q[0], -q[1], -q[2], -q[3]); }
+
+    function quatFromTwoVectors(a, b){
+      // Returns q such that q * a = b (both unit)
+      const v0 = normalize(a), v1 = normalize(b);
+      const c = dot(v0, v1);
+      if (c < -0.999999){
+        // 180-degree
+        let axis = cross(vec3(1,0,0), v0);
+        if (norm(axis) < 1e-6) axis = cross(vec3(0,1,0), v0);
+        return quatFromAxisAngle(axis, Math.PI);
+      }
+      const axis = cross(v0, v1);
+      const s = Math.sqrt((1+c)*2);
+      const invs = 1/s;
+      return quat(s*0.5, axis[0]*invs, axis[1]*invs, axis[2]*invs);
+    }
+
+    // Parameters and state
+    let paramMass = 1.0;
+    let paramRadius = 60; // px
+    let paramThickness = 8; // px
+    let paramTimeScale = 3.0;
+
+    const zHat = vec3(0,0,1);
+
+    // Inertias (function of m,R,h)
+    function inertiaTransverse(m, R, h){ return 0.25*m*R*R + (1/12)*m*h*h; } // I⊥ = Ixx = Iyy
+    function inertiaAxial(m, R){ return 0.5*m*R*R; } // I∥ = Izz
+
+    let I_perp = inertiaTransverse(paramMass, paramRadius, paramThickness);
+    let I_axis = inertiaAxial(paramMass, paramRadius);
+
+    // World-space angular momentum (constant)
+    let L_world = vec3(0, 200, 0);
+
+    // Orientation quaternion (world <- body). Body z-axis is coin normal.
+    let q = quat(1,0,0,0);
+
+    // Position of center (in plane units px)
+    let pos = vec3(0,0,0);
+
+    let isPaused = false;
+    let showTrails = false;
+
+    function resetSimulation(){
+      // Read UI
+      paramMass = Number(massEl.value);
+      paramRadius = Number(radiusEl.value);
+      paramThickness = Number(thicknessEl.value);
+      paramTimeScale = Number(timeEl.value);
+      L_world = vec3(Number(LxEl.value), Number(LyEl.value), Number(LzEl.value));
+
+      I_perp = inertiaTransverse(paramMass, paramRadius, paramThickness);
+      I_axis = inertiaAxial(paramMass, paramRadius);
+
+      // Initial orientation from tilt θ (from vertical) and heading ψ
+      const theta = Number(tiltEl.value) * Math.PI/180; // 0..pi/2
+      const psi = Number(headingEl.value) * Math.PI/180; // 0..2pi
+      const n0 = normalize(vec3(Math.cos(psi)*Math.sin(theta), Math.sin(psi)*Math.sin(theta), Math.cos(theta)));
+      // Rotate body z (0,0,1) to n0
+      const qTilt = quatFromTwoVectors(vec3(0,0,1), n0);
+      // Additional spin phase φ about n0
+      const phi = Number(spinPhaseEl.value) * Math.PI/180;
+      const qSpin = quatFromAxisAngle(n0, phi);
+      q = quatNormalize(quatMul(qSpin, qTilt));
+
+      // Start at screen center
+      pos = vec3(canvas.width*0.5, canvas.height*0.5, 0);
+
+      if (!showTrails) ctx.clearRect(0,0,canvas.width, canvas.height);
+      syncLabels();
+    }
+
+    function bodyFromWorld(v){ return quatRotate(quatConjugate(q), v); }
+    function worldFromBody(v){ return quatRotate(q, v); }
+
+    function computeOmegaWorld(){
+      // L is constant in world. Compute ω_body = I^{-1} L_body, then rotate back to world.
+      const L_body = bodyFromWorld(L_world);
+      const omega_body = vec3(
+        L_body[0] / I_perp,
+        L_body[1] / I_perp,
+        L_body[2] / I_axis
+      );
+      return worldFromBody(omega_body);
+    }
+
+    function update(dt){
+      if (isPaused) return;
+      const dtScaled = dt * paramTimeScale;
+
+      // Angular update (torque-free, constant L_world)
+      const omega_w = computeOmegaWorld();
+      // Integrate quaternion: q_dot = 0.5 * q ⊗ [0, ω]
+      const w = q[0], x = q[1], y = q[2], z = q[3];
+      const ox = omega_w[0], oy = omega_w[1], oz = omega_w[2];
+      const dq = quat(
+        -0.5*(x*ox + y*oy + z*oz),
+         0.5*(w*ox + y*oz - z*oy),
+         0.5*(w*oy + z*ox - x*oz),
+         0.5*(w*oz + x*oy - y*ox)
+      );
+      q[0] += dq[0]*dtScaled;
+      q[1] += dq[1]*dtScaled;
+      q[2] += dq[2]*dtScaled;
+      q[3] += dq[3]*dtScaled;
+      quatNormalize(q);
+
+      // Translation (no-slip kinematic speed)
+      const n = worldFromBody(vec3(0,0,1)); // coin normal
+      const cosTheta = Math.max(-1, Math.min(1, dot(n, zHat)));
+      const sinTheta = Math.sqrt(Math.max(0, 1 - cosTheta*cosTheta));
+      const t_dir_raw = cross(n, zHat);
+      const t_dir = (sinTheta > 1e-6) ? mul(normalize(t_dir_raw), 1) : vec3(0,0,0);
+      const omegaDotN = dot(omega_w, n);
+      const speed = paramRadius * sinTheta * omegaDotN; // px/s
+      const v_cm = mul(t_dir, speed);
+
+      pos[0] += v_cm[0] * dtScaled;
+      pos[1] += v_cm[1] * dtScaled;
+
+      // Wrap around
+      const Rpad = paramRadius + 10;
+      if (pos[0] > canvas.width + Rpad) pos[0] = -Rpad;
+      if (pos[0] < -Rpad) pos[0] = canvas.width + Rpad;
+      if (pos[1] > canvas.height + Rpad) pos[1] = -Rpad;
+      if (pos[1] < -Rpad) pos[1] = canvas.height + Rpad;
+    }
+
+    function draw(){
+      if (!showTrails) ctx.clearRect(0,0,canvas.width, canvas.height);
+
+      // Draw faint grid for plane
+      ctx.save();
+      ctx.strokeStyle = 'rgba(80,100,160,0.15)';
+      ctx.lineWidth = 1;
+      const grid = 80;
+      for (let x=0; x<canvas.width; x+=grid){
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+      }
+      for (let y=0; y<canvas.height; y+=grid){
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+      }
+      ctx.restore();
+
+      // Orientation
+      const n = worldFromBody(vec3(0,0,1));
+      const cosTheta = Math.max(-1, Math.min(1, dot(n, zHat)));
+      const sinTheta = Math.sqrt(Math.max(0, 1 - cosTheta*cosTheta));
+      const nProj = sub(n, mul(zHat, dot(n, zHat))); // projection onto plane
+      const angleEllipse = (sinTheta > 1e-6) ? Math.atan2(nProj[1], nProj[0]) + Math.PI/2 : 0;
+
+      // Ellipse radii (orthographic projection of tilted circle)
+      const a = paramRadius;                  // major
+      const b = paramRadius * Math.abs(cosTheta); // minor
+
+      // Fill gradient hint
+      const gx = pos[0] + (sinTheta > 1e-6 ? Math.cos(angleEllipse)*a*0.2 : 0);
+      const gy = pos[1] + (sinTheta > 1e-6 ? Math.sin(angleEllipse)*a*0.2 : 0);
+      const grad = ctx.createRadialGradient(gx, gy, Math.max(3, a*0.2), pos[0], pos[1], a);
+      grad.addColorStop(0, 'rgba(180,200,255,0.9)');
+      grad.addColorStop(1, 'rgba(40,60,140,0.9)');
+
+      // Draw projected coin
+      ctx.save();
+      ctx.translate(pos[0], pos[1]);
+      ctx.rotate(angleEllipse);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, a, b, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+      ctx.stroke();
+
+      // Draw a rim marker by projecting a body rim point
+      const rimBody = vec3(paramRadius, 0, 0);
+      const rimWorld = add(pos, worldFromBody(rimBody));
+      ctx.fillStyle = 'rgba(255,220,0,0.95)';
+      ctx.beginPath();
+      ctx.arc(rimWorld[0]-pos[0], rimWorld[1]-pos[1], 4, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Draw L vector (projected) and n projection
+      ctx.save();
+      // L
+      const Ls = 0.2; // scale for arrow
+      ctx.strokeStyle = 'rgba(80,220,140,0.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pos[0], pos[1]);
+      ctx.lineTo(pos[0] + L_world[0]*Ls, pos[1] + L_world[1]*Ls);
+      ctx.stroke();
+      // n_proj
+      ctx.strokeStyle = 'rgba(220,120,120,0.9)';
+      ctx.beginPath();
+      ctx.moveTo(pos[0], pos[1]);
+      ctx.lineTo(pos[0] + nProj[0]*paramRadius, pos[1] + nProj[1]*paramRadius);
+      ctx.stroke();
+      ctx.restore();
+
+      // HUD
+      ctx.save();
+      ctx.fillStyle = 'rgba(200,220,255,0.9)';
+      ctx.font = '12px Arial';
+      const omega = computeOmegaWorld();
+      const Iperp = inertiaTransverse(paramMass, paramRadius, paramThickness).toFixed(1);
+      const Iaxis = inertiaAxial(paramMass, paramRadius).toFixed(1);
+      const hud = `m=${paramMass.toFixed(1)} R=${paramRadius.toFixed(0)} h=${paramThickness.toFixed(0)} | I⊥=${Iperp} I∥=${Iaxis} | L=(${L_world[0].toFixed(0)},${L_world[1].toFixed(0)},${L_world[2].toFixed(0)}) | |ω|=${norm(omega).toFixed(2)}`;
+      ctx.fillText(hud, 12, 20);
+      ctx.restore();
+    }
+
+    function animate(){
+      const dt = 1/60;
+      update(dt);
+      draw();
+      requestAnimationFrame(animate);
+    }
+
+    // Resize
     window.addEventListener('resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      // Update spacing for mobile
-      planetSpacing = window.innerWidth < 768 ? 20 : 30;
-      resetUniverse();
+      if (!showTrails) ctx.clearRect(0,0,canvas.width, canvas.height);
     });
-    
-    // Camera/viewport system for pan and zoom
-    let cameraX = 0;
-    let cameraY = 0;
-    let cameraZoom = 1.0;
-    let touchStartX = 0, touchStartY = 0;
-    let isTouching = false;
-    let initialDistance = 0;
-    
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-        isTouching = true;
-      } else if (e.touches.length === 2) {
-        // Pinch to zoom
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        initialDistance = Math.sqrt(
-          Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
-        );
-      }
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') togglePause();
+      if (e.key.toLowerCase() === 't') toggleTrails();
+      if (e.key.toLowerCase() === 'r') resetSimulation();
     });
-    
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      
-      if (e.touches.length === 1 && isTouching) {
-        const touch = e.touches[0];
-        const deltaX = touch.clientX - touchStartX;
-        const deltaY = touch.clientY - touchStartY;
-        
-        // Pan the camera view
-        cameraX += deltaX * 0.1;
-        cameraY += deltaY * 0.1;
-        
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-      } else if (e.touches.length === 2) {
-        // Pinch to zoom
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        const currentDistance = Math.sqrt(
-          Math.pow(touch2.clientX - touch1.clientX, 2) +
-          Math.pow(touch2.clientY - touch1.clientY, 2)
-        );
-        
-                 if (initialDistance > 0) {
-           const scale = currentDistance / initialDistance;
-           const oldZoom = cameraZoom;
-           cameraZoom *= Math.pow(scale, 0.2); // 5x less sensitive (0.2 power instead of 1.0)
-           cameraZoom = Math.max(0.1, Math.min(5.0, cameraZoom)); // Limit zoom range
-           
-           // Calculate galaxy center
-           const galaxyCenterX = canvas.width / 2;
-           const galaxyCenterY = canvas.height / 2 + canvas.height * 0.2;
-           
-           // Adjust camera position to keep galaxy center fixed
-           const zoomRatio = cameraZoom / oldZoom;
-           cameraX = galaxyCenterX - (galaxyCenterX - cameraX) * zoomRatio;
-           cameraY = galaxyCenterY - (galaxyCenterY - cameraY) * zoomRatio;
-         }
-      }
-    });
-    
-    canvas.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      isTouching = false;
-    });
-    
-         // Animation loop
-     function animate() {
-       const dt = 0.016; // ~60 FPS
-       updatePlanets(dt);
-       drawPlanets();
-       simulationTime += dt;
-       requestAnimationFrame(animate);
-     }
-    
-         // Initialize and start
-     initializePlanets();
-     animate();
+
+    // Init
+    syncLabels();
+    resetSimulation();
+    animate();
   </script>
 </body>
 </html> 
