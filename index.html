@@ -417,7 +417,8 @@
       const s_dir_raw = sub(zHat, mul(n, dot(n, zHat))); // projection of ẑ onto coin plane
       const hasTilt = (Math.sqrt(Math.max(0, 1 - cosTheta*cosTheta)) > 1e-6);
       const s_dir = hasTilt ? normalize(s_dir_raw) : vec3(0,0,0);
-      const v_cm3 = cross(omega_w, s_dir);
+      const omega_parallel = mul(n, dot(omega_w, n));
+      const v_cm3 = cross(omega_parallel, s_dir);
       const v_cm = mul(v_cm3, paramRadius);
 
       pos[0] += v_cm[0] * dtScaled;
@@ -478,12 +479,18 @@
       ctx.stroke();
 
       // Draw contact marker in the rotated ellipse frame: it sits on the minor axis at y = +b (toward -n_proj)
-      ctx.fillStyle = 'rgba(255,220,0,0.95)';
-      ctx.beginPath();
-      ctx.arc(0, b, 4, 0, Math.PI*2);
-      ctx.fill();
+      // (removed – draw in world coordinates after restore)
 
       ctx.restore();
+
+      // Contact marker at projected contact point: r_contact = -R * s_dir (world coords)
+      const sDirDrawRaw = sub(zHat, mul(n, dot(n, zHat)));
+      const sDirDraw = (sinTheta > 1e-6) ? normalize(sDirDrawRaw) : vec3(1,0,0);
+      const rContact = mul(sDirDraw, -paramRadius);
+      ctx.fillStyle = 'rgba(255,220,0,0.95)';
+      ctx.beginPath();
+      ctx.arc(pos[0] + rContact[0], pos[1] + rContact[1], 4, 0, Math.PI*2);
+      ctx.fill();
 
       // Draw L vector (projected) and n projection
       ctx.save();
