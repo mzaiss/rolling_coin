@@ -144,20 +144,20 @@
           </div>
           <div class="control-group">
             <label>Angular Momentum Ly</label>
-            <input type="range" id="Ly" min="-400" max="400" step="1" value="200" />
-            <span id="LyValue">200</span>
+            <input type="range" id="Ly" min="-400" max="400" step="1" value="0" />
+            <span id="LyValue">0</span>
           </div>
           <div class="control-group">
             <label>Angular Momentum Lz</label>
-            <input type="range" id="Lz" min="-400" max="400" step="1" value="0" />
-            <span id="LzValue">0</span>
+            <input type="range" id="Lz" min="-400" max="400" step="1" value="400" />
+            <span id="LzValue">400</span>
           </div>
         </div>
         <div class="control-column">
           <div class="control-group">
             <label>Initial Tilt θ (deg)</label>
-            <input type="range" id="tilt" min="0" max="90" step="1" value="80" />
-            <span id="tiltValue">80</span>
+            <input type="range" id="tilt" min="0" max="90" step="1" value="90" />
+            <span id="tiltValue">90</span>
           </div>
           <div class="control-group">
             <label>Heading ψ (deg)</label>
@@ -350,7 +350,7 @@
     let I_axis = inertiaAxial(paramMass, paramRadius);
 
     // World-space angular momentum (constant)
-    let L_world = vec3(0, 200, 0);
+    let L_world = vec3(0, 0, 400);
 
     // Orientation quaternion (world <- body). Body z-axis is coin normal.
     let q = quat(1,0,0,0);
