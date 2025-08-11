@@ -1,3 +1,7 @@
+
+# Deployed at
+https://mzaiss.github.io/rolling_coin/
+
 # Galaxy/Grid N‑Body Playground (Leapfrog)
 
 A single‑file HTML5/Canvas simulator that displays a 2D grid of interacting particles (“planets”) integrated with a symplectic leapfrog method. The UI lets you tune the force law and time scaling in real time.
