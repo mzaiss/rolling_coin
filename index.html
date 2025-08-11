@@ -181,7 +181,7 @@
 
       <div>
         <small>
-          Model: Rigid disk with principal inertias I⊥ = ¼ mR² + (1/12) m h², I∥ = ½ mR². World-space angular momentum L is constant (no torques). Orientation integrates via quaternion. No-slip speed: v = R·sinθ·(ω·n) along t = normalize(n × ẑ). Projection: orthographic top view draws the tilted circle as an ellipse.
+          Model: Rigid disk with principal inertias I⊥ = ¼ mR² + (1/12) m h², I∥ = ½ mR². World-space angular momentum L is constant (no external torques). Orientation integrates via quaternion. No-slip translation: v_cm = R · (ω × ŝ), where ŝ = normalize(ẑ − (n·ẑ) n). Projection: orthographic top view draws the tilted circle as an ellipse.
         </small>
       </div>
     </div>
@@ -411,15 +411,14 @@
       q[3] += dq[3]*dtScaled;
       quatNormalize(q);
 
-      // Translation (no-slip kinematic speed)
+      // Translation (enforce no-slip via contact constraint v_cm = R * (ω × s_dir))
       const n = worldFromBody(vec3(0,0,1)); // coin normal
       const cosTheta = Math.max(-1, Math.min(1, dot(n, zHat)));
-      const sinTheta = Math.sqrt(Math.max(0, 1 - cosTheta*cosTheta));
-      const t_dir_raw = cross(n, zHat);
-      const t_dir = (sinTheta > 1e-6) ? mul(normalize(t_dir_raw), 1) : vec3(0,0,0);
-      const omegaDotN = dot(omega_w, n);
-      const speed = paramRadius * sinTheta * omegaDotN; // px/s
-      const v_cm = mul(t_dir, speed);
+      const s_dir_raw = sub(zHat, mul(n, dot(n, zHat))); // projection of ẑ onto coin plane
+      const hasTilt = (Math.sqrt(Math.max(0, 1 - cosTheta*cosTheta)) > 1e-6);
+      const s_dir = hasTilt ? normalize(s_dir_raw) : vec3(0,0,0);
+      const v_cm3 = cross(omega_w, s_dir);
+      const v_cm = mul(v_cm3, paramRadius);
 
       pos[0] += v_cm[0] * dtScaled;
       pos[1] += v_cm[1] * dtScaled;
@@ -478,12 +477,10 @@
       ctx.strokeStyle = 'rgba(255,255,255,0.8)';
       ctx.stroke();
 
-      // Draw a rim marker by projecting a body rim point
-      const rimBody = vec3(paramRadius, 0, 0);
-      const rimWorld = add(pos, worldFromBody(rimBody));
+      // Draw contact marker in the rotated ellipse frame: it sits on the minor axis at y = +b (toward -n_proj)
       ctx.fillStyle = 'rgba(255,220,0,0.95)';
       ctx.beginPath();
-      ctx.arc(rimWorld[0]-pos[0], rimWorld[1]-pos[1], 4, 0, Math.PI*2);
+      ctx.arc(0, b, 4, 0, Math.PI*2);
       ctx.fill();
 
       ctx.restore();
