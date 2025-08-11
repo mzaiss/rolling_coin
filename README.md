@@ -39,8 +39,3 @@ A single‑file HTML5/Canvas simulator that displays a 2D grid of interacting pa
 
 This summarizes the current `index.html` implementation’s UI, rendering, and ODE/leapfrog integration. The next step is to replace it with the new physics problem (no planets).
 
-## Rolling Coin (No‑Slip)
-- Open `coin.html` for a single rigid disk rolling without slipping on a flat ground.
-- UI: `Mass (m)`, `Radius (R)`, `Initial Angular Momentum (L)`, `Time Scale`, plus `Reset`, `Pause`, `Trails`.
-- Physics: Moment of inertia `I = ½ m R²`. With no external torque, `L` is constant, so `ω = L/I` is constant. No‑slip constraint enforces `v = R·ω`.
-- ODE: `dφ/dt = ω`, `dx/dt = R·ω`, with the boundary condition that the contact point velocity relative to the ground is zero.
