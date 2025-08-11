@@ -420,8 +420,8 @@
       const s_dir_raw = sub(zHat, mul(n, dot(n, zHat))); // projection of ẑ onto coin plane
       const hasTilt = (Math.sqrt(Math.max(0, 1 - cosTheta*cosTheta)) > 1e-6);
       const s_dir = hasTilt ? normalize(s_dir_raw) : vec3(0,0,0);
-      const omega_parallel = mul(n, dot(omega_w, n));
-      const v_cm3 = cross(omega_parallel, s_dir);
+      // Pure rolling: v_cm = - ω × r_c with r_c = -R s_dir => v_cm = R (ω × s_dir)
+      const v_cm3 = cross(omega_w, s_dir);
       const v_cm = mul(v_cm3, paramRadius);
 
       pos[0] += v_cm[0] * dtScaled;
