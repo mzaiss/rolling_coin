@@ -106,6 +106,79 @@
       border: 1px solid #334;
       font-size: 12px;
     }
+
+    #debugPanel {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 300px;
+      max-height: 80vh;
+      background: rgba(0,0,0,0.95);
+      border: 2px solid #ff4444;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: #00ff00;
+      overflow-y: auto;
+      z-index: 200;
+      display: none;
+    }
+
+    #debugPanel.visible {
+      display: block;
+    }
+
+    #debugPanel h4 {
+      margin: 0 0 10px 0;
+      color: #ff4444;
+      font-size: 12px;
+    }
+
+    #debugLog {
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #333;
+      padding: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      word-wrap: break-word;
+    }
+
+    .debug-section {
+      margin-bottom: 10px;
+      padding: 5px;
+      border: 1px solid #333;
+      border-radius: 3px;
+    }
+
+    .debug-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 300;
+      font-size: 11px;
+    }
+
+    @media (max-width: 768px) {
+      #debugPanel {
+        width: calc(100vw - 20px);
+        right: 10px;
+        left: 10px;
+        top: 60px;
+        max-height: 60vh;
+      }
+      .debug-toggle {
+        top: 60px;
+        right: 15px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -201,13 +274,286 @@
   <div class="legend">Keys: Space = Pause, T = Trails, R = Reset | Axes: X=red, Y=green, Z=blue</div>
   <div class="copyright">© M.Zaiss'25 · 3D Coin · <a href="coin.html" target="_blank" style="color:#8888cc; text-decoration:none;">2D No-Slip</a></div>
 
+  <button class="debug-toggle" id="debugToggle" onclick="toggleDebugPanel()">DEBUG</button>
+  
+  <div id="debugPanel">
+    <h4>🐛 Debug Console</h4>
+    
+    <div class="debug-section">
+      <div><strong>Error Log:</strong></div>
+      <div id="debugLog"></div>
+    </div>
+    
+    <div class="debug-section">
+      <div><strong>Performance:</strong></div>
+      <div id="debugPerf">
+        FPS: <span id="fps">--</span><br>
+        Frame Time: <span id="frameTime">--</span>ms<br>
+        Memory: <span id="memory">--</span>MB
+      </div>
+    </div>
+    
+    <div class="debug-section">
+      <div><strong>Physics State:</strong></div>
+      <div id="debugState">
+        Position: <span id="posDebug">--</span><br>
+        Velocity: <span id="velDebug">--</span><br>
+        Angular Vel: <span id="omegaDebug">--</span><br>
+        Contact: <span id="contactDebug">--</span><br>
+        Energy: <span id="energyDebug">--</span>
+      </div>
+    </div>
+    
+    <div class="debug-section">
+      <div><strong>Browser Info:</strong></div>
+      <div id="debugBrowser">
+        User Agent: <span id="userAgent">--</span><br>
+        Screen: <span id="screenSize">--</span><br>
+        Viewport: <span id="viewportSize">--</span><br>
+        Device Pixel Ratio: <span id="pixelRatio">--</span><br>
+        Touch Support: <span id="touchSupport">--</span>
+      </div>
+    </div>
+    
+    <div class="debug-section">
+      <div><strong>Canvas Info:</strong></div>
+      <div id="debugCanvas">
+        Canvas Size: <span id="canvasSize">--</span><br>
+        Context: <span id="contextType">--</span><br>
+        WebGL Support: <span id="webglSupport">--</span>
+      </div>
+    </div>
+    
+    <div class="debug-section">
+      <button onclick="clearDebugLog()" style="background:#666;color:white;border:none;padding:4px 8px;border-radius:3px;">Clear Log</button>
+      <button onclick="exportDebugInfo()" style="background:#666;color:white;border:none;padding:4px 8px;border-radius:3px;">Export Info</button>
+    </div>
+  </div>
+
   <script>
+    // Debug system - Initialize early to catch all errors
+    let debugPanel = null;
+    let debugVisible = false;
+    let debugLog = [];
+    let lastFrameTime = performance.now();
+    let frameCount = 0;
+    let fpsUpdateTime = 0;
+    
+    // Override console methods to capture logs
+    const originalConsole = {
+      log: console.log,
+      error: console.error,
+      warn: console.warn,
+      info: console.info
+    };
+    
+    function addToDebugLog(type, message, timestamp = new Date()) {
+      const logEntry = {
+        type,
+        message: String(message),
+        timestamp: timestamp.toISOString().split('T')[1].slice(0, -1)
+      };
+      debugLog.push(logEntry);
+      
+      // Keep only last 100 entries
+      if (debugLog.length > 100) {
+        debugLog.shift();
+      }
+      
+      updateDebugLogDisplay();
+      
+      // Call original console method
+      if (originalConsole[type]) {
+        originalConsole[type].apply(console, arguments);
+      }
+    }
+    
+    // Override console methods
+    console.log = (...args) => addToDebugLog('log', args.join(' '));
+    console.error = (...args) => addToDebugLog('error', args.join(' '));
+    console.warn = (...args) => addToDebugLog('warn', args.join(' '));
+    console.info = (...args) => addToDebugLog('info', args.join(' '));
+    
+    // Catch unhandled errors
+    window.addEventListener('error', (event) => {
+      addToDebugLog('error', `Unhandled Error: ${event.message} at ${event.filename}:${event.lineno}`);
+    });
+    
+    window.addEventListener('unhandledrejection', (event) => {
+      addToDebugLog('error', `Unhandled Promise Rejection: ${event.reason}`);
+    });
+    
+    function toggleDebugPanel() {
+      debugVisible = !debugVisible;
+      debugPanel = debugPanel || document.getElementById('debugPanel');
+      if (debugPanel) {
+        debugPanel.classList.toggle('visible', debugVisible);
+        if (debugVisible) {
+          updateAllDebugInfo();
+        }
+      }
+    }
+    
+    function updateDebugLogDisplay() {
+      const logElement = document.getElementById('debugLog');
+      if (!logElement || !debugVisible) return;
+      
+      const logHtml = debugLog.slice(-20).map(entry => {
+        const color = {
+          error: '#ff4444',
+          warn: '#ffaa44',
+          info: '#4444ff',
+          log: '#00ff00'
+        }[entry.type] || '#00ff00';
+        
+        return `<div style="color:${color};">[${entry.timestamp}] ${entry.type.toUpperCase()}: ${entry.message}</div>`;
+      }).join('');
+      
+      logElement.innerHTML = logHtml;
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+    
+    function clearDebugLog() {
+      debugLog = [];
+      updateDebugLogDisplay();
+    }
+    
+    function exportDebugInfo() {
+      const info = {
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        screen: `${screen.width}x${screen.height}`,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        devicePixelRatio: window.devicePixelRatio,
+        touchSupport: 'ontouchstart' in window,
+        logs: debugLog,
+        canvasSize: canvas ? `${canvas.width}x${canvas.height}` : 'N/A',
+        webglSupport: !!window.WebGLRenderingContext
+      };
+      
+      const dataStr = JSON.stringify(info, null, 2);
+      const blob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'debug-info.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    function updateAllDebugInfo() {
+      if (!debugVisible) return;
+      
+      // Browser info
+      document.getElementById('userAgent').textContent = navigator.userAgent.slice(0, 50) + '...';
+      document.getElementById('screenSize').textContent = `${screen.width}x${screen.height}`;
+      document.getElementById('viewportSize').textContent = `${window.innerWidth}x${window.innerHeight}`;
+      document.getElementById('pixelRatio').textContent = window.devicePixelRatio;
+      document.getElementById('touchSupport').textContent = 'ontouchstart' in window ? 'Yes' : 'No';
+      
+      // Canvas info
+      if (canvas) {
+        document.getElementById('canvasSize').textContent = `${canvas.width}x${canvas.height}`;
+        document.getElementById('contextType').textContent = ctx ? '2D' : 'None';
+      }
+      document.getElementById('webglSupport').textContent = !!window.WebGLRenderingContext ? 'Yes' : 'No';
+      
+      // Memory info (if available)
+      if (performance.memory) {
+        const memMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+        document.getElementById('memory').textContent = memMB;
+      }
+    }
+    
+    function updatePerformanceDebug() {
+      if (!debugVisible) return;
+      
+      const now = performance.now();
+      const deltaTime = now - lastFrameTime;
+      lastFrameTime = now;
+      frameCount++;
+      
+      // Update FPS every second
+      if (now - fpsUpdateTime > 1000) {
+        const fps = Math.round(frameCount * 1000 / (now - fpsUpdateTime));
+        document.getElementById('fps').textContent = fps;
+        frameCount = 0;
+        fpsUpdateTime = now;
+      }
+      
+      document.getElementById('frameTime').textContent = deltaTime.toFixed(1);
+    }
+    
+    function updatePhysicsDebug() {
+      if (!debugVisible) return;
+      
+      try {
+        document.getElementById('posDebug').textContent = `(${pos[0].toFixed(1)}, ${pos[1].toFixed(1)}, ${pos[2].toFixed(1)})`;
+        document.getElementById('velDebug').textContent = `(${vel[0].toFixed(1)}, ${vel[1].toFixed(1)}, ${vel[2].toFixed(1)})`;
+        document.getElementById('omegaDebug').textContent = `(${omega[0].toFixed(2)}, ${omega[1].toFixed(2)}, ${omega[2].toFixed(2)})`;
+        
+        const contact_pos = getContactPoint();
+        const in_contact = contact_pos[2] <= 0;
+        document.getElementById('contactDebug').textContent = in_contact ? 'YES' : 'NO';
+        
+        const energy_kinetic = 0.5 * paramMass * (vel[0]*vel[0] + vel[1]*vel[1] + vel[2]*vel[2]);
+        const omega_body = bodyFromWorld(omega);
+        const energy_rotational = 0.5 * (I_perp * (omega_body[0]*omega_body[0] + omega_body[1]*omega_body[1]) + I_axis * omega_body[2]*omega_body[2]);
+        const energy_total = energy_kinetic + energy_rotational + paramMass * paramGravity * pos[2];
+        
+        document.getElementById('energyDebug').textContent = energy_total.toFixed(0);
+      } catch (e) {
+        document.getElementById('posDebug').textContent = 'Error reading state';
+      }
+    }
+    
+    // Mobile touch debugging
+    function setupTouchDebugging() {
+      ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(eventType => {
+        document.addEventListener(eventType, (e) => {
+          console.log(`Touch ${eventType}: ${e.touches.length} touches, target:${e.target.tagName}`);
+        }, { passive: false });
+      });
+      
+      // Add orientation change debugging
+      window.addEventListener('orientationchange', () => {
+        console.log('Orientation changed to:', window.orientation || screen.orientation?.angle || 'unknown');
+        setTimeout(() => {
+          console.log('New viewport size after orientation change:', window.innerWidth + 'x' + window.innerHeight);
+        }, 100);
+      });
+      
+      // Add visibility change debugging
+      document.addEventListener('visibilitychange', () => {
+        console.log('Visibility changed. Hidden:', document.hidden);
+      });
+      
+      // Add focus debugging
+      window.addEventListener('focus', () => console.log('Window gained focus'));
+      window.addEventListener('blur', () => console.log('Window lost focus'));
+    }
+
+    // Log initial startup
+    console.log('=== 3D Coin App Starting ===');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Screen size:', screen.width + 'x' + screen.height);
+    console.log('Viewport size:', window.innerWidth + 'x' + window.innerHeight);
+    console.log('Device pixel ratio:', window.devicePixelRatio);
+    console.log('Touch support:', 'ontouchstart' in window);
+    console.log('Orientation:', window.orientation || screen.orientation?.angle || 'unknown');
+    
+    // Setup mobile debugging
+    setupTouchDebugging();
+
     // Canvas setup
     const canvas = document.createElement('canvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     document.body.appendChild(canvas);
     const ctx = canvas.getContext('2d');
+    
+    console.log('Canvas created:', canvas.width + 'x' + canvas.height);
+    console.log('2D context available:', !!ctx);
 
     // UI elements
     const massEl = document.getElementById('mass');
@@ -654,8 +1000,16 @@
 
     function animate(){
       const dt = 1/60;
-      update(dt);
-      draw();
+      try {
+        update(dt);
+        draw();
+        
+        // Update debug info
+        updatePerformanceDebug();
+        updatePhysicsDebug();
+      } catch (error) {
+        console.error('Animation loop error:', error.message, error.stack);
+      }
       requestAnimationFrame(animate);
     }
 
@@ -674,9 +1028,18 @@
     });
 
     // Init
-    syncLabels();
-    resetSimulation();
-    animate();
+    console.log('Starting initialization...');
+    try {
+      syncLabels();
+      console.log('Labels synced successfully');
+      resetSimulation();
+      console.log('Simulation reset successfully');
+      animate();
+      console.log('Animation started successfully');
+      console.log('=== 3D Coin App Ready ===');
+    } catch (error) {
+      console.error('Initialization failed:', error.message, error.stack);
+    }
   </script>
 </body>
 </html> 
