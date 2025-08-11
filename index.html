@@ -138,17 +138,17 @@
         </div>
         <div class="control-column">
           <div class="control-group">
-            <label>Angular Momentum Lx</label>
+            <label>Angular Momentum Lx (body)</label>
             <input type="range" id="Lx" min="-400" max="400" step="1" value="0" />
             <span id="LxValue">0</span>
           </div>
           <div class="control-group">
-            <label>Angular Momentum Ly</label>
+            <label>Angular Momentum Ly (body)</label>
             <input type="range" id="Ly" min="-400" max="400" step="1" value="0" />
             <span id="LyValue">0</span>
           </div>
           <div class="control-group">
-            <label>Angular Momentum Lz</label>
+            <label>Angular Momentum Lz (body)</label>
             <input type="range" id="Lz" min="-400" max="400" step="1" value="400" />
             <span id="LzValue">400</span>
           </div>
@@ -177,7 +177,6 @@
         <button class="button" onclick="togglePause()">Pause</button>
         <button class="button" onclick="toggleTrails()">Trails</button>
         <button class="button" onclick="randomizeL()">Random L</button>
-        <button class="button" onclick="alignLToCoinAxis()">Align L to Coin Axis</button>
       </div>
 
       <div>
@@ -231,10 +230,9 @@
       paramThickness = Number(thicknessEl.value);
       I_perp = inertiaTransverse(paramMass, paramRadius, paramThickness);
       I_axis = inertiaAxial(paramMass, paramRadius);
-      // Allow L sliders to change constant world L interactively
-      L_world[0] = Number(LxEl.value);
-      L_world[1] = Number(LyEl.value);
-      L_world[2] = Number(LzEl.value);
+      // Interpret UI L sliders as body-frame components; map to world via current orientation
+      const L_body_ui = vec3(Number(LxEl.value), Number(LyEl.value), Number(LzEl.value));
+      L_world = worldFromBody(L_body_ui);
       syncLabels();
     }
 
@@ -242,9 +240,9 @@
     radiusEl.addEventListener('input', applyParametersLive);
     thicknessEl.addEventListener('input', applyParametersLive);
     timeEl.addEventListener('input', () => { paramTimeScale = Number(timeEl.value); syncLabels(); });
-    LxEl.addEventListener('input', () => { L_world[0] = Number(LxEl.value); syncLabels(); });
-    LyEl.addEventListener('input', () => { L_world[1] = Number(LyEl.value); syncLabels(); });
-    LzEl.addEventListener('input', () => { L_world[2] = Number(LzEl.value); syncLabels(); });
+    LxEl.addEventListener('input', applyParametersLive);
+    LyEl.addEventListener('input', applyParametersLive);
+    LzEl.addEventListener('input', applyParametersLive);
     tiltEl.addEventListener('input', syncLabels);
     headingEl.addEventListener('input', syncLabels);
     spinPhaseEl.addEventListener('input', syncLabels);
@@ -264,27 +262,16 @@
     }
 
     function randomizeL() {
-      L_world[0] = (Math.random() * 800 - 400);
-      L_world[1] = (Math.random() * 800 - 400);
-      L_world[2] = (Math.random() * 800 - 400);
-      LxEl.value = L_world[0].toFixed(0);
-      LyEl.value = L_world[1].toFixed(0);
-      LzEl.value = L_world[2].toFixed(0);
+      // Randomize body-frame L, then map to world and update sliders to show body-frame values
+      const L_body_rand = vec3((Math.random()*800-400), (Math.random()*800-400), (Math.random()*800-400));
+      L_world = worldFromBody(L_body_rand);
+      LxEl.value = L_body_rand[0].toFixed(0);
+      LyEl.value = L_body_rand[1].toFixed(0);
+      LzEl.value = L_body_rand[2].toFixed(0);
       syncLabels();
     }
 
-    // Set L (world) to be parallel to the coin's body z-axis (its symmetry axis)
-    function alignLToCoinAxis() {
-      const Lmag = norm(L_world);
-      const nAxisWorld = worldFromBody(vec3(0,0,1)); // coin normal in world
-      L_world = mul(nAxisWorld, Lmag);
-      LxEl.value = L_world[0].toFixed(0);
-      LyEl.value = L_world[1].toFixed(0);
-      LzEl.value = L_world[2].toFixed(0);
-      syncLabels();
-    }
-
-    // Math helpers
+        // Math helpers
     function vec3(x=0,y=0,z=0){ return new Float64Array([x,y,z]); }
     function add(a,b){ return vec3(a[0]+b[0], a[1]+b[1], a[2]+b[2]); }
     function sub(a,b){ return vec3(a[0]-b[0], a[1]-b[1], a[2]-b[2]); }
@@ -382,7 +369,6 @@
       paramRadius = Number(radiusEl.value);
       paramThickness = Number(thicknessEl.value);
       paramTimeScale = Number(timeEl.value);
-      L_world = vec3(Number(LxEl.value), Number(LyEl.value), Number(LzEl.value));
 
       I_perp = inertiaTransverse(paramMass, paramRadius, paramThickness);
       I_axis = inertiaAxial(paramMass, paramRadius);
@@ -397,6 +383,10 @@
       const phi = Number(spinPhaseEl.value) * Math.PI/180;
       const qSpin = quatFromAxisAngle(n0, phi);
       q = quatNormalize(quatMul(qSpin, qTilt));
+
+      // Set L_world from body-frame UI sliders using the initialized orientation
+      const L_body_ui = vec3(Number(LxEl.value), Number(LyEl.value), Number(LzEl.value));
+      L_world = worldFromBody(L_body_ui);
 
       // Start at screen center
       pos = vec3(canvas.width*0.5, canvas.height*0.5, 0);
@@ -567,7 +557,8 @@
       const omega = computeOmegaWorld();
       const Iperp = inertiaTransverse(paramMass, paramRadius, paramThickness).toFixed(1);
       const Iaxis = inertiaAxial(paramMass, paramRadius).toFixed(1);
-      const hud = `m=${paramMass.toFixed(1)} R=${paramRadius.toFixed(0)} h=${paramThickness.toFixed(0)} | I⊥=${Iperp} I∥=${Iaxis} | L=(${L_world[0].toFixed(0)},${L_world[1].toFixed(0)},${L_world[2].toFixed(0)}) | |ω|=${norm(omega).toFixed(2)}`;
+      const L_body_disp = bodyFromWorld(L_world);
+      const hud = `m=${paramMass.toFixed(1)} R=${paramRadius.toFixed(0)} h=${paramThickness.toFixed(0)} | I⊥=${Iperp} I∥=${Iaxis} | L_body=(${L_body_disp[0].toFixed(0)},${L_body_disp[1].toFixed(0)},${L_body_disp[2].toFixed(0)}) | |ω|=${norm(omega).toFixed(2)}`;
       ctx.fillText(hud, 12, 20);
       ctx.restore();
 
