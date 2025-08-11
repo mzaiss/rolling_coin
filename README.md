@@ -1,46 +1,49 @@
+# 3D Rolling Coin (Top‑View Projection)
 
-# Deployed at
-https://mzaiss.github.io/rolling_coin/
+Deployed at: https://mzaiss.github.io/rolling_coin/
 
-# Galaxy/Grid N‑Body Playground (Leapfrog)
+A single‑file HTML5/Canvas demo of a rigid disk rolling without slipping on a plane, simulated in 3D but rendered as an orthographic top‑view projection (the tilted coin appears as an ellipse). Orientation is integrated with a quaternion; world‑space angular momentum L is held constant (no external torques). The no‑slip constraint drives translation from spin.
 
-A single‑file HTML5/Canvas simulator that displays a 2D grid of interacting particles (“planets”) integrated with a symplectic leapfrog method. The UI lets you tune the force law and time scaling in real time.
+## Files
+- `index.html`: 3D coin simulation (this README describes this file)
+- `coin.html`: 2D no‑slip reference variant (optional)
 
-## UI
-- **Control panel**: Fixed, minimizable panel with responsive layout.
-  - **Force Law** selector: `1/r³`, `1/r²`, `1/r`, `log(r)` (default), `1` (constant), `√r`, `r`, `r²`, `r³`.
-  - **Sliders**: `G` (force strength), `Time Scale`, `Initial Angular Momentum`.
-  - **Buttons**: `Reset`, `Pause`, `Random All` (randomizes positions/velocities within the original grid bounds), `Trails` (toggles persistent trails by skipping canvas clear).
-- **Mobile friendly**: Scales fonts/spacing; supports touch for camera controls.
+## Controls (in `index.html`)
+- Mass m
+- Radius R (px)
+- Thickness h (px)
+- Time Scale
+- Angular Momentum components: Lx, Ly, Lz
+- Initial Tilt θ (deg)
+- Heading ψ (deg)
+- Initial Spin Phase φ (deg)
+- Buttons: Reset, Pause, Trails, Random L
+- Keyboard: Space = Pause, T = Trails, R = Reset
 
-## Visualization
-- **Canvas**: Full‑screen `canvas` is appended to `body` and used for all rendering.
-- **Particles**: 20×20 grid initialized near screen center (shifted ~20% down). Radius ≈ 3 px.
-  - Initial tangential velocity set from the chosen angular momentum slider to create rotation about the shifted center.
-  - **Color**: HSL hue/lightness derived from each particle’s initial radial distance to center for a radial color gradient.
-- **Trails**: When enabled, the canvas is not cleared each frame and particles are drawn with partial alpha to leave faded trajectories.
-- **Camera**: Pan/zoom via touch gestures (pinch to zoom with gentle sensitivity and clamped zoom; camera transforms applied around a fixed “galaxy center”).
+## Physics model
+- Rigid disk with principal inertias
+  - I⊥ = 1/4 m R² + (1/12) m h²  (transverse, Ixx = Iyy)
+  - I∥ = 1/2 m R²               (axial, Izz)
+- World‑space angular momentum L is constant.
+  - Compute ω_body = I^{-1} · L_body, then rotate to world: ω = R_body→world(ω_body)
+- Orientation update via quaternion q
+  - q̇ = 1/2 · q ⊗ [0, ω]
+- No‑slip rolling on a horizontal plane (ẑ is plane normal)
+  - Let n be the coin’s world normal (body z‑axis in world)
+  - ŝ = normalize(ẑ − (n·ẑ) n)  (direction of contact on the rim)
+  - v_cm = R · (ω × ŝ)
+- Projection and rendering
+  - The tilted circle (radius R) appears as an ellipse with major a = R and minor b = R · |cos θ|, where θ is the tilt from vertical.
+  - Optional spokes, projected axes, and L arrow aid visualization.
 
-## ODE and Integrator
-- **State per particle**: position `(x, y)`, velocity `(vx, vy)`, `mass`, `radius`.
-- **Forces**: Pairwise central force along the separation vector with magnitude `G * f(r)`:
-  - `f(r)` determined by the selected force law; a small‑r clamp avoids singularities; a short‑range cutoff (`r > 4 * radius`) avoids extreme near‑field forces.
-  - A frame‑wise **normalization factor** is computed from the net force on one reference particle and used to scale `G` for stability across laws.
-- **Time stepping**: Fixed step `dt ≈ 0.016 * TimeScale` seconds.
-  - **Leapfrog (kick–drift–kick)**: half‑step velocity update from forces, full position update, second half‑step velocity update. This is a symplectic scheme that better preserves qualitative behavior than simple Euler.
-- **Open domain**: No boundaries or wall bounces; particles can drift off‑screen.
+## How to run locally
+- Open `index.html` directly in a modern browser, or serve the folder with any static server.
+- Mobile‑friendly controls; canvas fills the window.
 
-## Main entry points
-- `initializePlanets()` sets up the grid, colors, and initial tangential velocities.
-- `calculateForce(r, forceLaw)` returns the scalar force magnitude per law.
-- `updatePlanets(dt)` computes pairwise forces and applies the leapfrog update.
-- `drawPlanets()` applies camera transforms and renders particles (with or without trails).
-- Event handlers wire UI changes and touch camera controls; `animate()` drives the frame loop via `requestAnimationFrame`.
+## Notes
+- Position wraps around the viewport to keep the coin on screen.
+- A small reference panel draws example projected coins for sanity checks.
+- The `coin.html` page shows a simpler 2D no‑slip model (ω = L/I with I = 1/2 m R², v = R·ω).
 
-This summarizes the current `index.html` implementation’s UI, rendering, and ODE/leapfrog integration. The next step is to replace it with the new physics problem (no planets).
-
-## Rolling Coin (No‑Slip)
-- Open `coin.html` for a single rigid disk rolling without slipping on a flat ground.
-- UI: `Mass (m)`, `Radius (R)`, `Initial Angular Momentum (L)`, `Time Scale`, plus `Reset`, `Pause`, `Trails`.
-- Physics: Moment of inertia `I = ½ m R²`. With no external torque, `L` is constant, so `ω = L/I` is constant. No‑slip constraint enforces `v = R·ω`.
-- ODE: `dφ/dt = ω`, `dx/dt = R·ω`, with the boundary condition that the contact point velocity relative to the ground is zero.
+## License
+See `LICENSE`.
