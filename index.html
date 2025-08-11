@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Physics Universe Simulator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000011;
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      color: white;
+    }
+    
+    #controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.9);
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid #4444ff;
+      z-index: 100;
+      max-height: 60vh;
+      overflow-y: auto;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+    
+    #controls.minimized {
+      max-height: 50px;
+      overflow: hidden;
+    }
+    
+    #controls.minimized .control-content {
+      display: none;
+    }
+    
+    #minimizeBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #4444ff;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    @media (max-width: 768px) {
+      #controls {
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        padding: 10px;
+        font-size: 12px;
+        max-height: 50vh;
+      }
+      
+      .control-group {
+        margin: 8px 0;
+      }
+      
+      label {
+        font-size: 11px;
+        margin-bottom: 3px;
+      }
+      
+      select, input {
+        width: 100%;
+        padding: 6px;
+        font-size: 12px;
+      }
+      
+      .button {
+        padding: 8px 12px;
+        font-size: 11px;
+        margin: 3px;
+      }
+    }
+    
+    .control-group {
+      margin: 8px 0;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .control-row {
+      display: flex;
+      gap: 15px;
+      align-items: flex-start;
+    }
+    
+    .control-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #88aaff;
+      font-weight: bold;
+    }
+    
+    select, input {
+      width: 100%;
+      max-width: 200px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #4444ff;
+      background: #001122;
+      color: white;
+      font-size: 14px;
+    }
+    
+    .button {
+      background: linear-gradient(45deg, #4444ff, #8888ff);
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      font-weight: bold;
+    }
+    
+    .button:hover {
+      background: linear-gradient(45deg, #6666ff, #aaaaff);
+    }
+    
+
+    
+    .planet {
+      position: absolute;
+      border-radius: 50%;
+      box-shadow: 0 0 10px currentColor;
+          }
+      
+      .copyright {
+        text-align: center;
+        color: #6666aa;
+        font-size: 12px;
+        margin-top: 20px;
+        font-family: 'Arial', sans-serif;
+      }
+      
+      .copyright a {
+        color: #8888cc;
+        text-decoration: none;
+      }
+      
+             .copyright a:hover {
+         text-decoration: underline;
+       }
+       
+
+      
+      .copyright {
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        color: #6666aa;
+        font-size: 12px;
+        font-family: 'Arial', sans-serif;
+        z-index: 100;
+        background: rgba(0,0,0,0.7);
+        padding: 5px 10px;
+        border-radius: 5px;
+      }
+   </style>
+ </head>
+ <body>
+  <div id="controls">
+    <button id="minimizeBtn" onclick="toggleControls()">-</button>
+    <h3>Universe Controls</h3>
+    <div class="control-content">
+    
+        <div class="control-row">
+      <div class="control-column">
+        <div class="control-group">
+          <label>Force Law:</label>
+                     <select id="forceLaw">
+                            <option value="1/r3">1/r³</option>
+               <option value="1/r2">1/r²</option>
+               <option value="1/r">1/r</option>
+               <option value="log" selected>log(r)</option>
+               <option value="constant">1</option>
+               <option value="sqrt">√r</option>
+               <option value="r">r</option>
+               <option value="r2">r²</option>
+               <option value="r3">r³</option>
+           </select>
+        </div>
+        
+        <div class="control-group">
+          <label>Force Constant (G):</label>
+          <input type="range" id="gravityConst" min="0.1" max="5" step="0.1" value="1">
+          <span id="gravityValue">1.0</span>
+        </div>
+      </div>
+      
+      <div class="control-column">
+        <div class="control-group">
+          <label>Time Scale:</label>
+          <input type="range" id="timeScale" min="0.1" max="30" step="0.1" value="3">
+          <span id="timeValue">3.0</span>
+        </div>
+        
+        <div class="control-group">
+          <label>Initial Angular Momentum:</label>
+                  <input type="range" id="angularSpeed" min="0" max="10" step="0.1" value="1.0">
+        <span id="angularValue">1.0</span>
+        </div>
+      </div>
+    </div>
+     
+                <div class="button-row">
+       <button class="button" onclick="resetUniverse()">Reset</button>
+       <button class="button" onclick="togglePause()">Pause</button>
+       <button class="button" onclick="randomizeVelocities()">Random All</button>
+       <button class="button" onclick="toggleTrajectories()">Trails</button>
+     </div>
+   </div>
+   </div>
+   
+        <div class="copyright">
+      © M.Zaiss'25, <a href="https://github.com/mzaiss/galactic_forces" target="_blank">github.com/mzaiss/galactic_forces</a> | <a href="matrix.html">3x3</a>
+   </div>
+  
+
+
+  <script>
+    const canvas = document.createElement('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    
+         // Universe parameters
+     let G = 1.0;
+     let timeScale = 3.0;
+     let planetMass = 1.0;
+     let angularSpeed = 1.0;
+           let forceLaw = 'log';
+      let isPaused = false;
+      let simulationTime = 0;
+      let showTrajectories = false;
+    
+         // Planet grid - adjust spacing for mobile
+     const gridSize = 20; // Always 20 planets
+     const planetSpacing = window.innerWidth < 768 ? 20 : 30; // Smaller spacing on mobile
+    const planets = [];
+    
+         // Initialize planets in a grid
+     function initializePlanets() {
+       planets.length = 0;
+       const startX = (canvas.width - (gridSize - 1) * planetSpacing) / 2;
+       const startY = (canvas.height - (gridSize - 1) * planetSpacing) / 2 + canvas.height * 0.2; // Move center 20% down
+       
+       // Calculate center of the universe (moved 20% down)
+       const centerX = canvas.width / 2;
+       const centerY = canvas.height / 2 + canvas.height * 0.2;
+       
+       for (let i = 0; i < gridSize; i++) {
+         for (let j = 0; j < gridSize; j++) {
+           const x = startX + i * planetSpacing;
+           const y = startY + j * planetSpacing;
+           
+           // Calculate distance from center
+           const dx = x - centerX;
+           const dy = y - centerY;
+           const distance = Math.sqrt(dx * dx + dy * dy);
+           
+                       // Add angular momentum (tangential velocity)
+            let vx = 0, vy = 0;
+            
+            if (distance > 0) {
+              // Perpendicular velocity for rotation (tangential)
+              vx = (-dy / distance) * angularSpeed * distance * 0.01;
+              vy = (dx / distance) * angularSpeed * distance * 0.01;
+            }
+           
+                      // Calculate color based on initial distance from center (radial symmetry)
+            const maxDistance = Math.sqrt((canvas.width/2) * (canvas.width/2) + (canvas.height/2) * (canvas.height/2));
+            const initialDistance = distance; // Store the initial distance
+            const colorHue = (initialDistance / maxDistance) * 360; // Hue based on initial distance
+            const colorSaturation = 100; // Saturation increases with initial distance
+            const colorLightness = 50 - (initialDistance / maxDistance) * 20; // Brightness decreases with initial distance
+            
+            planets.push({
+              x: x,
+              y: y,
+              vx: vx,
+              vy: vy,
+              mass: planetMass,
+              radius: 3,
+              initialDistance: initialDistance, // Store for reference
+              color: `hsl(${colorHue}, ${colorSaturation}%, ${colorLightness}%)`
+            });
+         }
+       }
+     }
+    
+    // Calculate force based on selected law
+    function calculateForce(r, forceLaw) {
+      if (r < 0.1) r = 0.1; // Prevent division by zero
+      
+             switch(forceLaw) {
+         case '1/r3':
+           return 1 / (r * r * r);
+         case '1/r':
+           return 1 / r;
+         case '1/r2':
+           return 1 / (r * r);
+         case 'r':
+           return r;
+         case 'log':
+           return Math.log(r + 1);
+         case 'constant':
+           return 1;
+         case 'r2':
+           return r * r;
+         case 'r3':
+           return r * r * r;
+         case 'sqrt':
+           return Math.sqrt(r);
+         default:
+           return 1 / r;
+       }
+    }
+    
+                   // Update planet physics using optimized Leapfrog algorithm
+      function updatePlanets(dt) {
+        if (isPaused) return;
+        
+        const dt_scaled = dt * timeScale;
+        const dt_half = dt_scaled * 0.5;
+        
+        // Pre-calculate normalization factor once
+        let normalizationFactor = 1.0;
+        if (planets.length > 1) {
+          let totalForceOnFirst = 0;
+          for (let j = 1; j < planets.length; j++) {
+            const dx = planets[j].x - planets[0].x;
+            const dy = planets[j].y - planets[0].y;
+            const r = Math.sqrt(dx * dx + dy * dy);
+            if (r > 0.1) { // Avoid division by zero
+              const cutoffDistance = planets[0].radius * 4;
+              if (r > cutoffDistance) { // Only apply force if distance > radius*2
+                totalForceOnFirst += 1.0 * calculateForce(r, forceLaw); // Use G=1 for normalization
+              }
+            }
+          }
+          if (totalForceOnFirst > 0) {
+            normalizationFactor = 1.0 / totalForceOnFirst;
+          }
+        }
+        
+        // Pre-calculate common values
+        const G_normalized = G * normalizationFactor;
+        
+        // Step 1: Update velocities by half step
+        for (let i = 0; i < planets.length; i++) {
+          let fx = 0, fy = 0;
+          const planet_i = planets[i];
+          const mass_i = planet_i.mass;
+          
+          for (let j = 0; j < planets.length; j++) {
+            if (i === j) continue;
+            
+            const planet_j = planets[j];
+            const dx = planet_j.x - planet_i.x;
+            const dy = planet_j.y - planet_i.y;
+            const r_squared = dx * dx + dy * dy;
+            
+            if (r_squared > 0.1) { // Avoid division by zero
+              const r = Math.sqrt(r_squared);
+              const cutoffDistance = planet_i.radius * 4;
+              
+              if (r > cutoffDistance) { // Only apply force if distance > radius*2
+                const force = G_normalized * calculateForce(r, forceLaw);
+                const force_over_r = force / r;
+                
+                fx += dx * force_over_r;
+                fy += dy * force_over_r;
+              }
+            }
+          }
+          
+          // Update velocities by half step (F = ma)
+          planet_i.vx += (fx / mass_i) * dt_half;
+          planet_i.vy += (fy / mass_i) * dt_half;
+        }
+        
+        // Step 2: Update positions by full step
+        for (let planet of planets) {
+          planet.x += planet.vx * dt_scaled;
+          planet.y += planet.vy * dt_scaled;
+          
+          // Planets can travel to infinity - no wall bouncing
+        }
+        
+        // Step 3: Update velocities by another half step
+        for (let i = 0; i < planets.length; i++) {
+          let fx = 0, fy = 0;
+          const planet_i = planets[i];
+          const mass_i = planet_i.mass;
+          
+          for (let j = 0; j < planets.length; j++) {
+            if (i === j) continue;
+            
+            const planet_j = planets[j];
+            const dx = planet_j.x - planet_i.x;
+            const dy = planet_j.y - planet_i.y;
+            const r_squared = dx * dx + dy * dy;
+            
+            if (r_squared > 0.1) { // Avoid division by zero
+              const r = Math.sqrt(r_squared);
+              const cutoffDistance = planet_i.radius *4;
+              
+              if (r > cutoffDistance) { // Only apply force if distance > radius*2
+                const force = G_normalized * calculateForce(r, forceLaw);
+                const force_over_r = force / r;
+                
+                fx += dx * force_over_r;
+                fy += dy * force_over_r;
+              }
+            }
+          }
+          
+          // Update velocities by half step (F = ma)
+          planet_i.vx += (fx / mass_i) * dt_half;
+          planet_i.vy += (fy / mass_i) * dt_half;
+        }
+      }
+    
+         // Draw planets with camera transform
+     function drawPlanets() {
+       // Only clear canvas if trajectories are disabled
+       if (!showTrajectories) {
+         ctx.clearRect(0, 0, canvas.width, canvas.height);
+       }
+       
+       // Apply camera transform
+       ctx.save();
+       ctx.translate(cameraX, cameraY);
+       ctx.scale(cameraZoom, cameraZoom);
+       
+       // Draw planets with fade effect for trajectories
+       for (let planet of planets) {
+         if (showTrajectories) {
+           // Draw with transparency for trajectory effect
+           ctx.fillStyle = planet.color.replace(')', ', 0.3)').replace('hsl', 'hsla');
+         } else {
+           ctx.fillStyle = planet.color;
+         }
+         ctx.beginPath();
+         ctx.arc(planet.x, planet.y, planet.radius, 0, Math.PI * 2);
+         ctx.fill();
+       }
+       
+       // Restore camera transform
+       ctx.restore();
+     }
+    
+    
+    
+    // Event listeners
+    document.getElementById('forceLaw').addEventListener('change', (e) => {
+      forceLaw = e.target.value;
+    });
+    
+    document.getElementById('gravityConst').addEventListener('input', (e) => {
+      G = parseFloat(e.target.value);
+      document.getElementById('gravityValue').textContent = G.toFixed(1);
+    });
+    
+    document.getElementById('timeScale').addEventListener('input', (e) => {
+      timeScale = parseFloat(e.target.value);
+      document.getElementById('timeValue').textContent = timeScale.toFixed(1);
+    });
+    
+    document.getElementById('angularSpeed').addEventListener('input', (e) => {
+      angularSpeed = parseFloat(e.target.value);
+      document.getElementById('angularValue').textContent = angularSpeed.toFixed(1);
+    });
+    
+                   function resetUniverse() {
+        // Read current values from UI controls
+        angularSpeed = parseFloat(document.getElementById('angularSpeed').value);
+        G = parseFloat(document.getElementById('gravityConst').value);
+        timeScale = parseFloat(document.getElementById('timeScale').value);
+        forceLaw = document.getElementById('forceLaw').value;
+        
+        // Update display values
+        document.getElementById('angularValue').textContent = angularSpeed.toFixed(1);
+        document.getElementById('gravityValue').textContent = G.toFixed(1);
+        document.getElementById('timeValue').textContent = timeScale.toFixed(1);
+        
+        // Reset camera view
+        cameraX = 0;
+        cameraY = 0;
+        cameraZoom = 1.0;
+        
+        initializePlanets();
+        simulationTime = 0;
+      }
+    
+    function togglePause() {
+      isPaused = !isPaused;
+    }
+    
+         function randomizeVelocities() {
+       // Calculate the original grid boundaries
+       const startX = (canvas.width - (gridSize - 1) * planetSpacing) / 2;
+       const startY = (canvas.height - (gridSize - 1) * planetSpacing) / 2;
+       const endX = startX + (gridSize - 1) * planetSpacing;
+       const endY = startY + (gridSize - 1) * planetSpacing;
+       
+       for (let planet of planets) {
+         // Random positions within the original square grid area
+         planet.x = startX + Math.random() * (endX - startX);
+         planet.y = startY + Math.random() * (endY - startY);
+         
+         // Random velocities
+         planet.vx = (Math.random() - 0.5) * 2;
+         planet.vy = (Math.random() - 0.5) * 2;
+       }
+     }
+     
+         function toggleTrajectories() {
+      showTrajectories = !showTrajectories;
+      if (!showTrajectories) {
+        // Clear canvas when turning off trajectories
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+    
+    function toggleControls() {
+      const controls = document.getElementById('controls');
+      const btn = document.getElementById('minimizeBtn');
+      controls.classList.toggle('minimized');
+      btn.textContent = controls.classList.contains('minimized') ? '+' : '-';
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      // Update spacing for mobile
+      planetSpacing = window.innerWidth < 768 ? 20 : 30;
+      resetUniverse();
+    });
+    
+    // Camera/viewport system for pan and zoom
+    let cameraX = 0;
+    let cameraY = 0;
+    let cameraZoom = 1.0;
+    let touchStartX = 0, touchStartY = 0;
+    let isTouching = false;
+    let initialDistance = 0;
+    
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        isTouching = true;
+      } else if (e.touches.length === 2) {
+        // Pinch to zoom
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        initialDistance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+          Math.pow(touch2.clientY - touch1.clientY, 2)
+        );
+      }
+    });
+    
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      
+      if (e.touches.length === 1 && isTouching) {
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        
+        // Pan the camera view
+        cameraX += deltaX * 0.1;
+        cameraY += deltaY * 0.1;
+        
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      } else if (e.touches.length === 2) {
+        // Pinch to zoom
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const currentDistance = Math.sqrt(
+          Math.pow(touch2.clientX - touch1.clientX, 2) +
+          Math.pow(touch2.clientY - touch1.clientY, 2)
+        );
+        
+                 if (initialDistance > 0) {
+           const scale = currentDistance / initialDistance;
+           const oldZoom = cameraZoom;
+           cameraZoom *= Math.pow(scale, 0.2); // 5x less sensitive (0.2 power instead of 1.0)
+           cameraZoom = Math.max(0.1, Math.min(5.0, cameraZoom)); // Limit zoom range
+           
+           // Calculate galaxy center
+           const galaxyCenterX = canvas.width / 2;
+           const galaxyCenterY = canvas.height / 2 + canvas.height * 0.2;
+           
+           // Adjust camera position to keep galaxy center fixed
+           const zoomRatio = cameraZoom / oldZoom;
+           cameraX = galaxyCenterX - (galaxyCenterX - cameraX) * zoomRatio;
+           cameraY = galaxyCenterY - (galaxyCenterY - cameraY) * zoomRatio;
+         }
+      }
+    });
+    
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      isTouching = false;
+    });
+    
+         // Animation loop
+     function animate() {
+       const dt = 0.016; // ~60 FPS
+       updatePlanets(dt);
+       drawPlanets();
+       simulationTime += dt;
+       requestAnimationFrame(animate);
+     }
+    
+         // Initialize and start
+     initializePlanets();
+     animate();
+  </script>
+</body>
+</html> 
