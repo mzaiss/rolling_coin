@@ -164,9 +164,11 @@
         <button class="button" onclick="resetSimulation()">Reset</button>
         <button class="button" onclick="togglePause()">Pause</button>
         <button class="button" onclick="toggleTrails()">Trails</button>
+        <button class="button" onclick="toggleContactTrail()">Contact Trail</button>
+        <button class="button" onclick="toggleVelocityVectors()">Show Velocities</button>
       </div>
       <div>
-        <small>No-slip constraint: v = R·ω with ω = L / I and I = ½ m R². The coin’s contact point has zero velocity relative to the ground.</small>
+        <small>No-slip constraint: v = R·ω with ω = L / I and I = ½ m R². The coin's contact point has zero velocity relative to the ground.</small>
       </div>
     </div>
   </div>
@@ -197,6 +199,12 @@
 
     let isPaused = false;
     let showTrails = false;
+    let showContactTrail = false;
+    let showVelocityVectors = false;
+    
+    // Contact point trail storage
+    let contactTrail = [];
+    const maxTrailLength = 500;
 
     // UI wiring
     const massEl = document.getElementById('mass');
@@ -242,6 +250,17 @@
       showTrails = !showTrails;
       if (!showTrails) ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+    
+    function toggleContactTrail() {
+      showContactTrail = !showContactTrail;
+      if (!showContactTrail) {
+        contactTrail = [];
+      }
+    }
+    
+    function toggleVelocityVectors() {
+      showVelocityVectors = !showVelocityVectors;
+    }
 
     function momentOfInertia(m, R) { return 0.5 * m * R * R; }
 
@@ -264,6 +283,28 @@
 
       // Clear canvas if trails off
       if (!showTrails) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Clear contact trail
+      contactTrail = [];
+    }
+
+    // Calculate contact point position in world coordinates
+    function getContactPoint() {
+      // Contact point is at the bottom of the coin
+      const contactX = coinX + Math.sin(coinAngle) * paramRadius;
+      const contactY = coinY + paramRadius;  // Should be exactly at ground level
+      return { x: contactX, y: contactY };
+    }
+
+    // Calculate velocity of a point on the coin
+    function getPointVelocity(relativeX, relativeY) {
+      // For a point at relative position (rx, ry) from center:
+      // v_point = v_center + ω × r
+      // In 2D: v_point = (vx - ω * ry, vy + ω * rx)
+      return {
+        x: vx - omega * relativeY,
+        y: 0 + omega * relativeX
+      };
     }
 
     // Draw coin and ground
@@ -280,11 +321,81 @@
       ctx.moveTo(0, canvas.height - 60);
       ctx.lineTo(canvas.width, canvas.height - 60);
       ctx.stroke();
+      
+      // Draw grid marks on ground for reference
+      ctx.strokeStyle = '#112244';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, canvas.height - 60);
+        ctx.lineTo(x, canvas.height - 55);
+        ctx.stroke();
+      }
       ctx.restore();
+
+      // Draw contact trail before coin
+      if (showContactTrail && contactTrail.length > 1) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,100,100,0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(contactTrail[0].x, contactTrail[0].y);
+        for (let i = 1; i < contactTrail.length; i++) {
+          ctx.lineTo(contactTrail[i].x, contactTrail[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // Coin body
       ctx.save();
       ctx.translate(coinX, coinY);
+      
+      // Draw velocity vectors if enabled
+      if (showVelocityVectors) {
+        // Center velocity
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0,255,0,0.8)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(vx * 0.5, 0); // Scale for visibility
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(0,255,0,0.8)';
+        ctx.fillText('v_center', 5, -5);
+        ctx.restore();
+        
+        // Contact point velocity (should be zero!)
+        const contactRel = { x: Math.sin(coinAngle) * paramRadius, y: paramRadius };
+        const contactVel = getPointVelocity(contactRel.x, contactRel.y);
+        ctx.save();
+        ctx.translate(contactRel.x, contactRel.y);
+        ctx.strokeStyle = 'rgba(255,0,0,0.8)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(contactVel.x * 0.5, contactVel.y * 0.5); // Should be nearly zero
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,0,0,0.8)';
+        ctx.fillText(`v_contact: (${contactVel.x.toFixed(1)}, ${contactVel.y.toFixed(1)})`, 5, 15);
+        ctx.restore();
+        
+        // Top point velocity (should be 2x center velocity)
+        const topRel = { x: -Math.sin(coinAngle) * paramRadius, y: -paramRadius };
+        const topVel = getPointVelocity(topRel.x, topRel.y);
+        ctx.save();
+        ctx.translate(topRel.x, topRel.y);
+        ctx.strokeStyle = 'rgba(100,100,255,0.8)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(topVel.x * 0.5, topVel.y * 0.5);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(100,100,255,0.8)';
+        ctx.fillText('v_top', 5, -5);
+        ctx.restore();
+      }
+      
       const gradient = ctx.createRadialGradient(0, -paramRadius*0.4, paramRadius*0.2, 0, 0, paramRadius);
       gradient.addColorStop(0, 'hsl(220, 80%, 70%)');
       gradient.addColorStop(1, 'hsl(220, 80%, 30%)');
@@ -313,16 +424,26 @@
         ctx.moveTo(0, 0);
         ctx.lineTo(0, -paramRadius);
         ctx.stroke();
+        
+        // Add numbers to some spokes for better rotation visibility
+        if (i % 3 === 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.9)';
+          ctx.font = '14px Arial';
+          ctx.fillText(String(i/3), -5, -paramRadius + 15);
+        }
         ctx.restore();
       }
 
-      // Contact point marker
+      // Contact point marker (larger and more visible)
       ctx.save();
       ctx.rotate(-coinAngle); // undo to draw at world orientation
-      ctx.fillStyle = 'rgba(255,220,0,0.9)';
+      ctx.fillStyle = 'rgba(255,50,50,0.9)';
       ctx.beginPath();
-      ctx.arc(0, paramRadius, 5, 0, Math.PI * 2);
+      ctx.arc(0, paramRadius, 8, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
       ctx.restore();
 
       ctx.restore();
@@ -332,8 +453,14 @@
       ctx.fillStyle = 'rgba(200,220,255,0.9)';
       ctx.font = '12px Arial';
       const I = momentOfInertia(paramMass, paramRadius);
-      const info = `m=${paramMass.toFixed(1)}  R=${paramRadius.toFixed(0)}  I=½mR²=${I.toFixed(1)}  L=${paramL.toFixed(0)}  ω=${omega.toFixed(2)}  v=${vx.toFixed(2)}`;
+      const info = `m=${paramMass.toFixed(1)}  R=${paramRadius.toFixed(0)}  I=½mR²=${I.toFixed(1)}  L=${paramL.toFixed(0)}  ω=${omega.toFixed(2)} rad/s  v=${vx.toFixed(2)} px/s`;
       ctx.fillText(info, 12, 20);
+      
+      // Contact point verification
+      const contactVel = getPointVelocity(Math.sin(coinAngle) * paramRadius, paramRadius);
+      const contactSpeed = Math.sqrt(contactVel.x * contactVel.x + contactVel.y * contactVel.y);
+      ctx.fillText(`Contact point speed: ${contactSpeed.toFixed(3)} px/s (should be ≈0)`, 12, 40);
+      
       ctx.restore();
     }
 
@@ -345,12 +472,32 @@
       // With no torques, L is constant -> ω constant (unless user resets)
       coinX += vx * dtScaled;
       coinAngle += omega * dtScaled;
+      
+      // Track contact point
+      if (showContactTrail) {
+        const contact = getContactPoint();
+        contactTrail.push(contact);
+        if (contactTrail.length > maxTrailLength) {
+          contactTrail.shift();
+        }
+      }
 
       // Wrap-around so the coin stays on screen
       const wrapLeft = -paramRadius - 5;
       const wrapRight = canvas.width + paramRadius + 5;
-      if (coinX > wrapRight) coinX = wrapLeft;
-      if (coinX < wrapLeft) coinX = wrapRight;
+      if (coinX > wrapRight) {
+        coinX = wrapLeft;
+        if (showContactTrail) {
+          // Add a break in the trail
+          contactTrail = [];
+        }
+      }
+      if (coinX < wrapLeft) {
+        coinX = wrapRight;
+        if (showContactTrail) {
+          contactTrail = [];
+        }
+      }
     }
 
     function animate() {
