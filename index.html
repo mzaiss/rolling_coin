@@ -187,7 +187,7 @@
     </div>
   </div>
 
-  <div class="legend">Keys: Space = Pause, T = Trails, R = Reset</div>
+  <div class="legend">Keys: Space = Pause, T = Trails, R = Reset | Axes: X=red, Y=green, Z=blue</div>
   <div class="copyright">© M.Zaiss'25 · 3D Coin · <a href="coin.html" target="_blank" style="color:#8888cc; text-decoration:none;">2D No-Slip</a></div>
 
   <script>
@@ -346,6 +346,9 @@
 
     let isPaused = false;
     let showTrails = false;
+    // Axes/spokes visibility
+    let showAxes = true;
+    let showSpokes = true;
 
     function resetSimulation(){
       // Read UI
@@ -481,16 +484,18 @@
       ctx.restore();
 
       // Draw spokes to visualize rotation (projected from coin's plane)
-      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-      ctx.lineWidth = 1.5;
-      const numSpokes = 12;
-      for (let i = 0; i < numSpokes; i++) {
-        const a = (i / numSpokes) * Math.PI * 2;
-        const rWorld = worldFromBody(vec3(paramRadius * Math.cos(a), paramRadius * Math.sin(a), 0));
-        ctx.beginPath();
-        ctx.moveTo(pos[0], pos[1]);
-        ctx.lineTo(pos[0] + rWorld[0], pos[1] + rWorld[1]);
-        ctx.stroke();
+      if (showSpokes) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+        ctx.lineWidth = 1.5;
+        const numSpokes = 12;
+        for (let i = 0; i < numSpokes; i++) {
+          const a = (i / numSpokes) * Math.PI * 2;
+          const rWorld = worldFromBody(vec3(paramRadius * Math.cos(a), paramRadius * Math.sin(a), 0));
+          ctx.beginPath();
+          ctx.moveTo(pos[0], pos[1]);
+          ctx.lineTo(pos[0] + rWorld[0], pos[1] + rWorld[1]);
+          ctx.stroke();
+        }
       }
 
       // Contact marker at projected contact point: r_contact = -R * s_dir (world coords)
@@ -502,22 +507,31 @@
       ctx.arc(pos[0] + rContact[0], pos[1] + rContact[1], 4, 0, Math.PI*2);
       ctx.fill();
 
-      // Draw L vector (projected) and n projection
+      // Draw axes (projected body axes) and L vector
       ctx.save();
-      // L
-      const Ls = 0.2; // scale for arrow
-      ctx.strokeStyle = 'rgba(80,220,140,0.9)';
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(pos[0], pos[1]);
-      ctx.lineTo(pos[0] + L_world[0]*Ls, pos[1] + L_world[1]*Ls);
-      ctx.stroke();
-      // n_proj
-      ctx.strokeStyle = 'rgba(220,120,120,0.9)';
-      ctx.beginPath();
-      ctx.moveTo(pos[0], pos[1]);
-      ctx.lineTo(pos[0] + nProj[0]*paramRadius, pos[1] + nProj[1]*paramRadius);
-      ctx.stroke();
+      const axisLen = paramRadius;
+      // Body axes in world
+      const ex = worldFromBody(vec3(1,0,0));
+      const ey = worldFromBody(vec3(0,1,0));
+      const ez = n; // already computed
+      // Helper to draw a line from center
+      function drawVec(v, color, scale){
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(pos[0], pos[1]);
+        ctx.lineTo(pos[0] + v[0]*scale, pos[1] + v[1]*scale);
+        ctx.stroke();
+      }
+      if (showAxes) {
+        drawVec(ex, 'rgba(255,80,80,0.95)', axisLen);      // X (red)
+        drawVec(ey, 'rgba(120,255,120,0.95)', axisLen);    // Y (green)
+        // Z uses its projection onto the plane
+        drawVec(nProj, 'rgba(120,180,255,0.95)', axisLen); // Z (blue)
+      }
+      // L vector (projected)
+      const Ls = 0.2; // scale for arrow
+      drawVec(L_world, 'rgba(255,200,80,0.95)', Ls);
       ctx.restore();
 
       // HUD
