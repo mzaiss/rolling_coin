@@ -478,10 +478,20 @@
       ctx.strokeStyle = 'rgba(255,255,255,0.8)';
       ctx.stroke();
 
-      // Draw contact marker in the rotated ellipse frame: it sits on the minor axis at y = +b (toward -n_proj)
-      // (removed – draw in world coordinates after restore)
-
       ctx.restore();
+
+      // Draw spokes to visualize rotation (projected from coin's plane)
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+      ctx.lineWidth = 1.5;
+      const numSpokes = 12;
+      for (let i = 0; i < numSpokes; i++) {
+        const a = (i / numSpokes) * Math.PI * 2;
+        const rWorld = worldFromBody(vec3(paramRadius * Math.cos(a), paramRadius * Math.sin(a), 0));
+        ctx.beginPath();
+        ctx.moveTo(pos[0], pos[1]);
+        ctx.lineTo(pos[0] + rWorld[0], pos[1] + rWorld[1]);
+        ctx.stroke();
+      }
 
       // Contact marker at projected contact point: r_contact = -R * s_dir (world coords)
       const sDirDrawRaw = sub(zHat, mul(n, dot(n, zHat)));
