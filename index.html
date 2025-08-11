@@ -111,13 +111,13 @@
 <body>
   <div id="controls">
     <button id="minimizeBtn" onclick="toggleControls()">-</button>
-    <h3>3D Rolling Coin (Top View Projection)</h3>
+    <h3>3D Rolling Coin (Realistic Physics)</h3>
     <div class="control-content">
       <div class="control-row">
         <div class="control-column">
           <div class="control-group">
-            <label>Mass m</label>
-            <input type="range" id="mass" min="0.1" max="10" step="0.1" value="1.0" />
+            <label>Mass m (kg)</label>
+            <input type="range" id="mass" min="0.1" max="5" step="0.1" value="1.0" />
             <span id="massValue">1.0</span>
           </div>
           <div class="control-group">
@@ -132,32 +132,37 @@
           </div>
           <div class="control-group">
             <label>Time Scale</label>
-            <input type="range" id="timeScale" min="0.1" max="30" step="0.1" value="3" />
-            <span id="timeScaleValue">3.0</span>
+            <input type="range" id="timeScale" min="0.1" max="5" step="0.1" value="1" />
+            <span id="timeScaleValue">1.0</span>
           </div>
         </div>
         <div class="control-column">
           <div class="control-group">
-            <label>Angular Momentum Lx (body)</label>
-            <input type="range" id="Lx" min="-400" max="400" step="1" value="0" />
-            <span id="LxValue">0</span>
+            <label>Initial Velocity X (px/s)</label>
+            <input type="range" id="initVelX" min="-200" max="200" step="5" value="100" />
+            <span id="initVelXValue">100</span>
           </div>
           <div class="control-group">
-            <label>Angular Momentum Ly (body)</label>
-            <input type="range" id="Ly" min="-400" max="400" step="1" value="0" />
-            <span id="LyValue">0</span>
+            <label>Initial Velocity Y (px/s)</label>
+            <input type="range" id="initVelY" min="-200" max="200" step="5" value="0" />
+            <span id="initVelYValue">0</span>
           </div>
           <div class="control-group">
-            <label>Angular Momentum Lz (body)</label>
-            <input type="range" id="Lz" min="-400" max="400" step="1" value="400" />
-            <span id="LzValue">400</span>
+            <label>Initial Angular Vel ωz (rad/s)</label>
+            <input type="range" id="initOmegaZ" min="-20" max="20" step="0.5" value="0" />
+            <span id="initOmegaZValue">0</span>
+          </div>
+          <div class="control-group">
+            <label>Gravity g (px/s²)</label>
+            <input type="range" id="gravity" min="0" max="2000" step="50" value="980" />
+            <span id="gravityValue">980</span>
           </div>
         </div>
         <div class="control-column">
           <div class="control-group">
             <label>Initial Tilt θ (deg)</label>
-            <input type="range" id="tilt" min="0" max="90" step="1" value="90" />
-            <span id="tiltValue">90</span>
+            <input type="range" id="tilt" min="70" max="90" step="1" value="85" />
+            <span id="tiltValue">85</span>
           </div>
           <div class="control-group">
             <label>Heading ψ (deg)</label>
@@ -169,6 +174,11 @@
             <input type="range" id="spinPhase" min="0" max="360" step="1" value="0" />
             <span id="spinPhaseValue">0</span>
           </div>
+          <div class="control-group">
+            <label>Damping</label>
+            <input type="range" id="damping" min="0" max="0.1" step="0.001" value="0.01" />
+            <span id="dampingValue">0.01</span>
+          </div>
         </div>
       </div>
 
@@ -176,12 +186,13 @@
         <button class="button" onclick="resetSimulation()">Reset</button>
         <button class="button" onclick="togglePause()">Pause</button>
         <button class="button" onclick="toggleTrails()">Trails</button>
-        <button class="button" onclick="randomizeL()">Random L</button>
+        <button class="button" onclick="setRandomMotion()">Random Motion</button>
+        <button class="button" onclick="setPureRoll()">Pure Roll</button>
       </div>
 
       <div>
         <small>
-          Model: Rigid disk with principal inertias I⊥ = ¼ mR² + (1/12) m h², I∥ = ½ mR². World-space angular momentum L is constant (no external torques). Orientation integrates via quaternion. No-slip translation: v_cm = R · (ω × ŝ), where ŝ = normalize(ẑ − (n·ẑ) n). Projection: orthographic top view draws the tilted circle as an ellipse.
+          Realistic coin physics: proper no-slip constraint v_contact = 0, contact point at lowest rim point, torques from contact forces, energy conservation. Contact constraint: v_cm = -omega × r_contact where r_contact is from center to contact point.
         </small>
       </div>
     </div>
@@ -203,49 +214,49 @@
     const radiusEl = document.getElementById('radius');
     const thicknessEl = document.getElementById('thickness');
     const timeEl = document.getElementById('timeScale');
-    const LxEl = document.getElementById('Lx');
-    const LyEl = document.getElementById('Ly');
-    const LzEl = document.getElementById('Lz');
+    const initVelXEl = document.getElementById('initVelX');
+    const initVelYEl = document.getElementById('initVelY');
+    const initOmegaZEl = document.getElementById('initOmegaZ');
+    const gravityEl = document.getElementById('gravity');
     const tiltEl = document.getElementById('tilt');
     const headingEl = document.getElementById('heading');
     const spinPhaseEl = document.getElementById('spinPhase');
+    const dampingEl = document.getElementById('damping');
 
     function syncLabels() {
       document.getElementById('massValue').textContent = Number(massEl.value).toFixed(1);
       document.getElementById('radiusValue').textContent = Number(radiusEl.value).toFixed(0);
       document.getElementById('thicknessValue').textContent = Number(thicknessEl.value).toFixed(0);
       document.getElementById('timeScaleValue').textContent = Number(timeEl.value).toFixed(1);
-      document.getElementById('LxValue').textContent = Number(LxEl.value).toFixed(0);
-      document.getElementById('LyValue').textContent = Number(LyEl.value).toFixed(0);
-      document.getElementById('LzValue').textContent = Number(LzEl.value).toFixed(0);
+      document.getElementById('initVelXValue').textContent = Number(initVelXEl.value).toFixed(0);
+      document.getElementById('initVelYValue').textContent = Number(initVelYEl.value).toFixed(0);
+      document.getElementById('initOmegaZValue').textContent = Number(initOmegaZEl.value).toFixed(1);
+      document.getElementById('gravityValue').textContent = Number(gravityEl.value).toFixed(0);
       document.getElementById('tiltValue').textContent = Number(tiltEl.value).toFixed(0);
       document.getElementById('headingValue').textContent = Number(headingEl.value).toFixed(0);
       document.getElementById('spinPhaseValue').textContent = Number(spinPhaseEl.value).toFixed(0);
+      document.getElementById('dampingValue').textContent = Number(dampingEl.value).toFixed(3);
     }
 
-    // Live-apply parameter changes so R and inertias affect ω and v immediately
+    // Live-apply parameter changes
     function applyParametersLive(){
       paramMass = Number(massEl.value);
       paramRadius = Number(radiusEl.value);
       paramThickness = Number(thicknessEl.value);
+      paramGravity = Number(gravityEl.value);
+      paramDamping = Number(dampingEl.value);
       I_perp = inertiaTransverse(paramMass, paramRadius, paramThickness);
       I_axis = inertiaAxial(paramMass, paramRadius);
-      // Interpret UI L sliders as body-frame components; map to world via current orientation
-      const L_body_ui = vec3(Number(LxEl.value), Number(LyEl.value), Number(LzEl.value));
-      L_world = worldFromBody(L_body_ui);
       syncLabels();
     }
 
-    massEl.addEventListener('input', applyParametersLive);
-    radiusEl.addEventListener('input', applyParametersLive);
-    thicknessEl.addEventListener('input', applyParametersLive);
+    [massEl, radiusEl, thicknessEl, gravityEl, dampingEl].forEach(el => 
+      el.addEventListener('input', applyParametersLive)
+    );
     timeEl.addEventListener('input', () => { paramTimeScale = Number(timeEl.value); syncLabels(); });
-    LxEl.addEventListener('input', applyParametersLive);
-    LyEl.addEventListener('input', applyParametersLive);
-    LzEl.addEventListener('input', applyParametersLive);
-    tiltEl.addEventListener('input', syncLabels);
-    headingEl.addEventListener('input', syncLabels);
-    spinPhaseEl.addEventListener('input', syncLabels);
+    [initVelXEl, initVelYEl, initOmegaZEl, tiltEl, headingEl, spinPhaseEl].forEach(el => 
+      el.addEventListener('input', syncLabels)
+    );
 
     function toggleControls() {
       const controls = document.getElementById('controls');
@@ -261,17 +272,30 @@
       if (!showTrails) ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    function randomizeL() {
-      // Randomize body-frame L, then map to world and update sliders to show body-frame values
-      const L_body_rand = vec3((Math.random()*800-400), (Math.random()*800-400), (Math.random()*800-400));
-      L_world = worldFromBody(L_body_rand);
-      LxEl.value = L_body_rand[0].toFixed(0);
-      LyEl.value = L_body_rand[1].toFixed(0);
-      LzEl.value = L_body_rand[2].toFixed(0);
+    function setRandomMotion() {
+      initVelXEl.value = (Math.random() * 400 - 200).toFixed(0);
+      initVelYEl.value = (Math.random() * 400 - 200).toFixed(0);
+      initOmegaZEl.value = (Math.random() * 40 - 20).toFixed(1);
+      tiltEl.value = (Math.random() * 20 + 70).toFixed(0);
+      headingEl.value = (Math.random() * 360).toFixed(0);
       syncLabels();
+      resetSimulation();
     }
 
-        // Math helpers
+    function setPureRoll() {
+      // Set up for pure rolling motion: v = ω × R
+      const v = 150; // desired speed
+      const R = Number(radiusEl.value);
+      initVelXEl.value = v.toFixed(0);
+      initVelYEl.value = "0";
+      initOmegaZEl.value = (v / R).toFixed(1); // ω = v/R for pure rolling
+      tiltEl.value = "90"; // standing upright
+      headingEl.value = "0";
+      syncLabels();
+      resetSimulation();
+    }
+
+    // Math helpers
     function vec3(x=0,y=0,z=0){ return new Float64Array([x,y,z]); }
     function add(a,b){ return vec3(a[0]+b[0], a[1]+b[1], a[2]+b[2]); }
     function sub(a,b){ return vec3(a[0]-b[0], a[1]-b[1], a[2]-b[2]); }
@@ -301,10 +325,8 @@
       return quat(Math.cos(angle/2), a[0]*s, a[1]*s, a[2]*s);
     }
     function quatRotate(q, v){
-      // v' = q * (0,v) * q^{-1}
       const [w,x,y,z] = q;
       const vx = v[0], vy = v[1], vz = v[2];
-      // Compute via optimized formula
       const ix =  w*vx + y*vz - z*vy;
       const iy =  w*vy + z*vx - x*vz;
       const iz =  w*vz + x*vy - y*vx;
@@ -318,11 +340,9 @@
     function quatConjugate(q){ return quat(q[0], -q[1], -q[2], -q[3]); }
 
     function quatFromTwoVectors(a, b){
-      // Returns q such that q * a = b (both unit)
       const v0 = normalize(a), v1 = normalize(b);
       const c = dot(v0, v1);
       if (c < -0.999999){
-        // 180-degree
         let axis = cross(vec3(1,0,0), v0);
         if (norm(axis) < 1e-6) axis = cross(vec3(0,1,0), v0);
         return quatFromAxisAngle(axis, Math.PI);
@@ -337,9 +357,12 @@
     let paramMass = 1.0;
     let paramRadius = 60; // px
     let paramThickness = 8; // px
-    let paramTimeScale = 3.0;
+    let paramTimeScale = 1.0;
+    let paramGravity = 980; // px/s²
+    let paramDamping = 0.01;
 
     const zHat = vec3(0,0,1);
+    const yHat = vec3(0,1,0);
 
     // Inertias (function of m,R,h)
     function inertiaTransverse(m, R, h){ return 0.25*m*R*R + (1/12)*m*h*h; } // I⊥ = Ixx = Iyy
@@ -348,27 +371,25 @@
     let I_perp = inertiaTransverse(paramMass, paramRadius, paramThickness);
     let I_axis = inertiaAxial(paramMass, paramRadius);
 
-    // World-space angular momentum (constant)
-    let L_world = vec3(0, 0, 400);
-
-    // Orientation quaternion (world <- body). Body z-axis is coin normal.
-    let q = quat(1,0,0,0);
-
-    // Position of center (in plane units px)
-    let pos = vec3(0,0,0);
+    // State variables
+    let q = quat(1,0,0,0); // Orientation quaternion (world <- body)
+    let pos = vec3(0,0,0); // Position of center of mass
+    let vel = vec3(0,0,0); // Velocity of center of mass
+    let omega = vec3(0,0,0); // Angular velocity (world frame)
 
     let isPaused = false;
     let showTrails = false;
-    // Axes/spokes visibility
     let showAxes = true;
     let showSpokes = true;
 
     function resetSimulation(){
-      // Read UI
+      // Read UI parameters
       paramMass = Number(massEl.value);
       paramRadius = Number(radiusEl.value);
       paramThickness = Number(thicknessEl.value);
       paramTimeScale = Number(timeEl.value);
+      paramGravity = Number(gravityEl.value);
+      paramDamping = Number(dampingEl.value);
 
       I_perp = inertiaTransverse(paramMass, paramRadius, paramThickness);
       I_axis = inertiaAxial(paramMass, paramRadius);
@@ -377,6 +398,7 @@
       const theta = Number(tiltEl.value) * Math.PI/180; // 0..pi/2
       const psi = Number(headingEl.value) * Math.PI/180; // 0..2pi
       const n0 = normalize(vec3(Math.cos(psi)*Math.sin(theta), Math.sin(psi)*Math.sin(theta), Math.cos(theta)));
+      
       // Rotate body z (0,0,1) to n0
       const qTilt = quatFromTwoVectors(vec3(0,0,1), n0);
       // Additional spin phase φ about n0
@@ -384,12 +406,13 @@
       const qSpin = quatFromAxisAngle(n0, phi);
       q = quatNormalize(quatMul(qSpin, qTilt));
 
-      // Set L_world from body-frame UI sliders using the initialized orientation
-      const L_body_ui = vec3(Number(LxEl.value), Number(LyEl.value), Number(LzEl.value));
-      L_world = worldFromBody(L_body_ui);
-
-      // Start at screen center
+      // Initial position and velocity
       pos = vec3(canvas.width*0.5, canvas.height*0.5, 0);
+      vel = vec3(Number(initVelXEl.value), Number(initVelYEl.value), 0);
+      
+      // Initial angular velocity (world frame)
+      const initOmegaZ = Number(initOmegaZEl.value);
+      omega = vec3(0, 0, initOmegaZ);
 
       if (!showTrails) ctx.clearRect(0,0,canvas.width, canvas.height);
       syncLabels();
@@ -398,52 +421,106 @@
     function bodyFromWorld(v){ return quatRotate(quatConjugate(q), v); }
     function worldFromBody(v){ return quatRotate(q, v); }
 
-    function computeOmegaWorld(){
-      // L is constant in world. Compute ω_body = I^{-1} L_body, then rotate back to world.
-      const L_body = bodyFromWorld(L_world);
-      const omega_body = vec3(
-        L_body[0] / I_perp,
-        L_body[1] / I_perp,
-        L_body[2] / I_axis
-      );
-      return worldFromBody(omega_body);
+    // Get the contact point (lowest point on rim)
+    function getContactPoint(){
+      const n = worldFromBody(vec3(0,0,1)); // coin normal in world frame
+      const gravity_dir = vec3(0,0,-1); // gravity points down
+      
+      // Find the lowest point on the rim
+      // The rim is a circle in the coin's plane, so we need the point on the rim
+      // that is furthest in the gravity direction
+      
+      // Vector in coin plane that points "down" when projected to world
+      const down_in_plane = normalize(sub(gravity_dir, mul(n, dot(n, gravity_dir))));
+      
+      // Contact point relative to center
+      const r_contact_local = mul(down_in_plane, paramRadius);
+      
+      return add(pos, r_contact_local);
+    }
+
+    // Get vector from center of mass to contact point
+    function getContactVector(){
+      const n = worldFromBody(vec3(0,0,1)); // coin normal in world frame
+      const gravity_dir = vec3(0,0,-1); // gravity points down
+      
+      // Vector in coin plane that points "down" when projected to world
+      const down_in_plane = normalize(sub(gravity_dir, mul(n, dot(n, gravity_dir))));
+      
+      // Contact vector from center to contact point
+      return mul(down_in_plane, paramRadius);
     }
 
     function update(dt){
       if (isPaused) return;
       const dtScaled = dt * paramTimeScale;
 
-      // Angular update (torque-free, constant L_world)
-      const omega_w = computeOmegaWorld();
-      // Integrate quaternion: q_dot = 0.5 * q ⊗ [0, ω]
-      const w = q[0], x = q[1], y = q[2], z = q[3];
-      const ox = omega_w[0], oy = omega_w[1], oz = omega_w[2];
-      const dq = quat(
-        -0.5*(x*ox + y*oy + z*oz),
-         0.5*(w*ox + y*oz - z*oy),
-         0.5*(w*oy + z*ox - x*oz),
-         0.5*(w*oz + x*oy - y*ox)
-      );
-      q[0] += dq[0]*dtScaled;
-      q[1] += dq[1]*dtScaled;
-      q[2] += dq[2]*dtScaled;
-      q[3] += dq[3]*dtScaled;
+      // Get contact geometry
+      const r_contact = getContactVector();
+      const n = worldFromBody(vec3(0,0,1)); // coin normal
+      
+      // Check if coin is in contact with ground (z-component of contact point <= 0)
+      const contact_pos = add(pos, r_contact);
+      const in_contact = contact_pos[2] <= 0;
+      
+      if (in_contact) {
+        // CONTACT MECHANICS
+        
+        // Apply no-slip constraint: v_contact = v_cm + omega × r_contact = 0
+        // This gives us: v_cm = -omega × r_contact
+        const v_contact_desired = vec3(0,0,0); // no slip
+        const v_contact_current = add(vel, cross(omega, r_contact));
+        
+        // Constraint force to enforce no-slip
+        const constraint_error = sub(v_contact_current, v_contact_desired);
+        const constraint_strength = 10.0; // adjust for stiffness
+        
+        // Apply constraint correction to both linear and angular velocity
+        const constraint_force = mul(constraint_error, -constraint_strength);
+        
+        // Effect on linear velocity
+        vel = add(vel, mul(constraint_force, dtScaled / paramMass));
+        
+        // Effect on angular velocity (torque about center of mass)
+        const constraint_torque = cross(r_contact, constraint_force);
+        const omega_body = bodyFromWorld(omega);
+        const torque_body = bodyFromWorld(constraint_torque);
+        
+        // Update angular velocity in body frame (using principal moments)
+        omega_body[0] += torque_body[0] * dtScaled / I_perp;
+        omega_body[1] += torque_body[1] * dtScaled / I_perp;
+        omega_body[2] += torque_body[2] * dtScaled / I_axis;
+        
+        omega = worldFromBody(omega_body);
+        
+        // Constrain vertical position to keep contact point at ground level
+        pos[2] = -r_contact[2];
+        vel[2] = 0; // no vertical velocity when in contact
+        
+        // Apply damping when in contact
+        vel = mul(vel, 1 - paramDamping * dtScaled);
+        omega = mul(omega, 1 - paramDamping * dtScaled);
+      } else {
+        // FREE FALL
+        // Apply gravity
+        vel[2] -= paramGravity * dtScaled;
+      }
+
+      // Update position
+      pos[0] += vel[0] * dtScaled;
+      pos[1] += vel[1] * dtScaled;
+      pos[2] += vel[2] * dtScaled;
+
+      // Update orientation (integrate angular velocity)
+      const omega_quat = quat(0, omega[0], omega[1], omega[2]);
+      const q_dot = mul(quatMul(q, omega_quat), 0.5);
+      q[0] += q_dot[0] * dtScaled;
+      q[1] += q_dot[1] * dtScaled;
+      q[2] += q_dot[2] * dtScaled;
+      q[3] += q_dot[3] * dtScaled;
       quatNormalize(q);
 
-      // Translation (enforce no-slip via contact constraint v_cm = R * (ω × s_dir))
-      const n = worldFromBody(vec3(0,0,1)); // coin normal
-      const cosTheta = Math.max(-1, Math.min(1, dot(n, zHat)));
-      const s_dir_raw = sub(zHat, mul(n, dot(n, zHat))); // projection of ẑ onto coin plane
-      const hasTilt = (Math.sqrt(Math.max(0, 1 - cosTheta*cosTheta)) > 1e-6);
-      const s_dir = hasTilt ? normalize(s_dir_raw) : vec3(0,0,0);
-      // Pure rolling: v_cm = - ω × r_c with r_c = -R s_dir => v_cm = R (ω × s_dir)
-      const v_cm3 = cross(omega_w, s_dir);
-      const v_cm = mul(v_cm3, paramRadius);
-
-      pos[0] += v_cm[0] * dtScaled;
-      pos[1] += v_cm[1] * dtScaled;
-
-      // Wrap around
+      // Wrap around screen
       const Rpad = paramRadius + 10;
       if (pos[0] > canvas.width + Rpad) pos[0] = -Rpad;
       if (pos[0] < -Rpad) pos[0] = canvas.width + Rpad;
@@ -467,8 +544,8 @@
       }
       ctx.restore();
 
-      // Orientation
-      const n = worldFromBody(vec3(0,0,1));
+      // Get orientation info
+      const n = worldFromBody(vec3(0,0,1)); // coin normal
       const cosTheta = Math.max(-1, Math.min(1, dot(n, zHat)));
       const sinTheta = Math.sqrt(Math.max(0, 1 - cosTheta*cosTheta));
       const nProj = sub(n, mul(zHat, dot(n, zHat))); // projection onto plane
@@ -496,10 +573,9 @@
       ctx.lineWidth = 2;
       ctx.strokeStyle = 'rgba(255,255,255,0.8)';
       ctx.stroke();
-
       ctx.restore();
 
-      // Draw spokes to visualize rotation (projected from coin's plane)
+      // Draw spokes to visualize rotation
       if (showSpokes) {
         ctx.strokeStyle = 'rgba(255,255,255,0.75)';
         ctx.lineWidth = 1.5;
@@ -514,99 +590,66 @@
         }
       }
 
-      // Contact marker at projected contact point: r_contact = -R * s_dir (world coords)
-      const sDirDrawRaw = sub(zHat, mul(n, dot(n, zHat)));
-      const sDirDraw = (sinTheta > 1e-6) ? normalize(sDirDrawRaw) : vec3(1,0,0);
-      const rContact = mul(sDirDraw, -paramRadius);
+      // Contact marker
+      const contact_pos = getContactPoint();
       ctx.fillStyle = 'rgba(255,220,0,0.95)';
       ctx.beginPath();
-      ctx.arc(pos[0] + rContact[0], pos[1] + rContact[1], 4, 0, Math.PI*2);
+      ctx.arc(contact_pos[0], contact_pos[1], 4, 0, Math.PI*2);
       ctx.fill();
 
-      // Draw axes (projected body axes) and L vector
-      ctx.save();
-      ctx.lineWidth = 2;
-      const axisLen = paramRadius;
-      // Body axes in world
-      const ex = worldFromBody(vec3(1,0,0));
-      const ey = worldFromBody(vec3(0,1,0));
-      const ez = n; // already computed
-      // Helper to draw a line from center
-      function drawVec(v, color, scale){
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(pos[0], pos[1]);
-        ctx.lineTo(pos[0] + v[0]*scale, pos[1] + v[1]*scale);
-        ctx.stroke();
-      }
+      // Draw axes (projected body axes)
       if (showAxes) {
+        ctx.save();
+        ctx.lineWidth = 2;
+        const axisLen = paramRadius;
+        const ex = worldFromBody(vec3(1,0,0));
+        const ey = worldFromBody(vec3(0,1,0));
+        const ez = n;
+        
+        function drawVec(v, color, scale){
+          ctx.strokeStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(pos[0], pos[1]);
+          ctx.lineTo(pos[0] + v[0]*scale, pos[1] + v[1]*scale);
+          ctx.stroke();
+        }
+        
         drawVec(ex, 'rgba(255,80,80,0.95)', axisLen);      // X (red)
         drawVec(ey, 'rgba(120,255,120,0.95)', axisLen);    // Y (green)
-        // Z uses its projection onto the plane
         drawVec(nProj, 'rgba(120,180,255,0.95)', axisLen); // Z (blue)
+        ctx.restore();
       }
-      // L vector (projected)
-      const Ls = 0.2; // scale for arrow
-      drawVec(L_world, 'rgba(255,200,80,0.95)', Ls);
+
+      // Velocity vector
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,200,80,0.95)';
+      ctx.lineWidth = 2;
+      const velScale = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(pos[0], pos[1]);
+      ctx.lineTo(pos[0] + vel[0]*velScale, pos[1] + vel[1]*velScale);
+      ctx.stroke();
       ctx.restore();
 
       // HUD
       ctx.save();
       ctx.fillStyle = 'rgba(200,220,255,0.9)';
       ctx.font = '12px Arial';
-      const omega = computeOmegaWorld();
-      const Iperp = inertiaTransverse(paramMass, paramRadius, paramThickness).toFixed(1);
-      const Iaxis = inertiaAxial(paramMass, paramRadius).toFixed(1);
-      const L_body_disp = bodyFromWorld(L_world);
-      const hud = `m=${paramMass.toFixed(1)} R=${paramRadius.toFixed(0)} h=${paramThickness.toFixed(0)} | I⊥=${Iperp} I∥=${Iaxis} | L_body=(${L_body_disp[0].toFixed(0)},${L_body_disp[1].toFixed(0)},${L_body_disp[2].toFixed(0)}) | |ω|=${norm(omega).toFixed(2)}`;
-      ctx.fillText(hud, 12, 20);
+      const speed = norm(vel);
+      const angSpeed = norm(omega);
+      const r_contact = getContactVector();
+      const contact_pos = add(pos, r_contact);
+      const in_contact = contact_pos[2] <= 0;
+      const energy_kinetic = 0.5 * paramMass * (vel[0]*vel[0] + vel[1]*vel[1] + vel[2]*vel[2]);
+      const omega_body = bodyFromWorld(omega);
+      const energy_rotational = 0.5 * (I_perp * (omega_body[0]*omega_body[0] + omega_body[1]*omega_body[1]) + I_axis * omega_body[2]*omega_body[2]);
+      const energy_total = energy_kinetic + energy_rotational + paramMass * paramGravity * pos[2];
+      
+      const hud1 = `Speed: ${speed.toFixed(1)} px/s | ω: ${angSpeed.toFixed(2)} rad/s | Contact: ${in_contact ? 'YES' : 'NO'}`;
+      const hud2 = `Energy: KE=${energy_kinetic.toFixed(0)} + RE=${energy_rotational.toFixed(0)} + PE=${(paramMass * paramGravity * pos[2]).toFixed(0)} = ${energy_total.toFixed(0)}`;
+      ctx.fillText(hud1, 12, 20);
+      ctx.fillText(hud2, 12, 35);
       ctx.restore();
-
-      // Reference coins (non-moving): visual checks
-      function drawReferenceCoin(cx, cy, nRef, label){
-        const cosT = Math.max(-1, Math.min(1, dot(nRef, zHat)));
-        const sinT = Math.sqrt(Math.max(0, 1 - cosT*cosT));
-        const nProjRef = sub(nRef, mul(zHat, dot(nRef, zHat)));
-        const angleRef = (sinT > 1e-6) ? Math.atan2(nProjRef[1], nProjRef[0]) + Math.PI/2 : 0;
-        const aRef = Math.max(10, paramRadius * 0.7);
-        const bRef = aRef * Math.abs(cosT);
-
-        // ellipse
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(angleRef);
-        const gradRef = ctx.createRadialGradient(0, 0, Math.max(3, aRef*0.2), 0, 0, aRef);
-        gradRef.addColorStop(0, 'rgba(160,190,255,0.7)');
-        gradRef.addColorStop(1, 'rgba(30,50,130,0.7)');
-        ctx.fillStyle = gradRef;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, aRef, bRef, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-        ctx.stroke();
-        ctx.restore();
-
-        // label
-        ctx.save();
-        ctx.fillStyle = 'rgba(220,230,255,0.95)';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(label, cx + aRef + 10, cy);
-        ctx.restore();
-      }
-
-      const margin = 20;
-      const refX = canvas.width - Math.max(140, paramRadius * 2);
-      const spacing = Math.max(80, paramRadius * 1.6);
-      const startY = 120;
-      // 1) Flat on plane (n = z)
-      drawReferenceCoin(refX, startY, vec3(0,0,1), 'Flat (expected: circle)');
-      // 2) Standing, would roll in +x (n = +y) -> long axis horizontal
-      drawReferenceCoin(refX, startY + spacing, vec3(0,1,0), 'Stand (expected: roll → +x)');
-      // 3) Standing, would roll in +y (n = +x) -> long axis vertical
-      drawReferenceCoin(refX, startY + spacing*2, vec3(1,0,0), 'Stand (expected: roll → +y)');
     }
 
     function animate(){
@@ -625,7 +668,7 @@
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') togglePause();
+      if (e.code === 'Space') { e.preventDefault(); togglePause(); }
       if (e.key.toLowerCase() === 't') toggleTrails();
       if (e.key.toLowerCase() === 'r') resetSimulation();
     });
