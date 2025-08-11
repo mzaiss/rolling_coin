@@ -177,6 +177,7 @@
         <button class="button" onclick="togglePause()">Pause</button>
         <button class="button" onclick="toggleTrails()">Trails</button>
         <button class="button" onclick="randomizeL()">Random L</button>
+        <button class="button" onclick="alignLToCoinAxis()">Align L to Coin Axis</button>
       </div>
 
       <div>
@@ -266,6 +267,17 @@
       L_world[0] = (Math.random() * 800 - 400);
       L_world[1] = (Math.random() * 800 - 400);
       L_world[2] = (Math.random() * 800 - 400);
+      LxEl.value = L_world[0].toFixed(0);
+      LyEl.value = L_world[1].toFixed(0);
+      LzEl.value = L_world[2].toFixed(0);
+      syncLabels();
+    }
+
+    // Set L (world) to be parallel to the coin's body z-axis (its symmetry axis)
+    function alignLToCoinAxis() {
+      const Lmag = norm(L_world);
+      const nAxisWorld = worldFromBody(vec3(0,0,1)); // coin normal in world
+      L_world = mul(nAxisWorld, Lmag);
       LxEl.value = L_world[0].toFixed(0);
       LyEl.value = L_world[1].toFixed(0);
       LzEl.value = L_world[2].toFixed(0);
