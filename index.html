@@ -513,6 +513,52 @@
       const hud = `m=${paramMass.toFixed(1)} R=${paramRadius.toFixed(0)} h=${paramThickness.toFixed(0)} | I⊥=${Iperp} I∥=${Iaxis} | L=(${L_world[0].toFixed(0)},${L_world[1].toFixed(0)},${L_world[2].toFixed(0)}) | |ω|=${norm(omega).toFixed(2)}`;
       ctx.fillText(hud, 12, 20);
       ctx.restore();
+
+      // Reference coins (non-moving): visual checks
+      function drawReferenceCoin(cx, cy, nRef, label){
+        const cosT = Math.max(-1, Math.min(1, dot(nRef, zHat)));
+        const sinT = Math.sqrt(Math.max(0, 1 - cosT*cosT));
+        const nProjRef = sub(nRef, mul(zHat, dot(nRef, zHat)));
+        const angleRef = (sinT > 1e-6) ? Math.atan2(nProjRef[1], nProjRef[0]) + Math.PI/2 : 0;
+        const aRef = Math.max(10, paramRadius * 0.7);
+        const bRef = aRef * Math.abs(cosT);
+
+        // ellipse
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angleRef);
+        const gradRef = ctx.createRadialGradient(0, 0, Math.max(3, aRef*0.2), 0, 0, aRef);
+        gradRef.addColorStop(0, 'rgba(160,190,255,0.7)');
+        gradRef.addColorStop(1, 'rgba(30,50,130,0.7)');
+        ctx.fillStyle = gradRef;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, aRef, bRef, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+        ctx.stroke();
+        ctx.restore();
+
+        // label
+        ctx.save();
+        ctx.fillStyle = 'rgba(220,230,255,0.95)';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, cx + aRef + 10, cy);
+        ctx.restore();
+      }
+
+      const margin = 20;
+      const refX = canvas.width - Math.max(140, paramRadius * 2);
+      const spacing = Math.max(80, paramRadius * 1.6);
+      const startY = 120;
+      // 1) Flat on plane (n = z)
+      drawReferenceCoin(refX, startY, vec3(0,0,1), 'Flat (expected: circle)');
+      // 2) Standing, would roll in +x (n = +y) -> long axis horizontal
+      drawReferenceCoin(refX, startY + spacing, vec3(0,1,0), 'Stand (expected: roll → +x)');
+      // 3) Standing, would roll in +y (n = +x) -> long axis vertical
+      drawReferenceCoin(refX, startY + spacing*2, vec3(1,0,0), 'Stand (expected: roll → +y)');
     }
 
     function animate(){
