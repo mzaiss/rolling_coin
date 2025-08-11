@@ -223,13 +223,27 @@
       document.getElementById('spinPhaseValue').textContent = Number(spinPhaseEl.value).toFixed(0);
     }
 
-    massEl.addEventListener('input', syncLabels);
-    radiusEl.addEventListener('input', syncLabels);
-    thicknessEl.addEventListener('input', syncLabels);
+    // Live-apply parameter changes so R and inertias affect ω and v immediately
+    function applyParametersLive(){
+      paramMass = Number(massEl.value);
+      paramRadius = Number(radiusEl.value);
+      paramThickness = Number(thicknessEl.value);
+      I_perp = inertiaTransverse(paramMass, paramRadius, paramThickness);
+      I_axis = inertiaAxial(paramMass, paramRadius);
+      // Allow L sliders to change constant world L interactively
+      L_world[0] = Number(LxEl.value);
+      L_world[1] = Number(LyEl.value);
+      L_world[2] = Number(LzEl.value);
+      syncLabels();
+    }
+
+    massEl.addEventListener('input', applyParametersLive);
+    radiusEl.addEventListener('input', applyParametersLive);
+    thicknessEl.addEventListener('input', applyParametersLive);
     timeEl.addEventListener('input', () => { paramTimeScale = Number(timeEl.value); syncLabels(); });
-    LxEl.addEventListener('input', syncLabels);
-    LyEl.addEventListener('input', syncLabels);
-    LzEl.addEventListener('input', syncLabels);
+    LxEl.addEventListener('input', () => { L_world[0] = Number(LxEl.value); syncLabels(); });
+    LyEl.addEventListener('input', () => { L_world[1] = Number(LyEl.value); syncLabels(); });
+    LzEl.addEventListener('input', () => { L_world[2] = Number(LzEl.value); syncLabels(); });
     tiltEl.addEventListener('input', syncLabels);
     headingEl.addEventListener('input', syncLabels);
     spinPhaseEl.addEventListener('input', syncLabels);

@@ -211,9 +211,22 @@
       document.getElementById('timeScaleValue').textContent = Number(timeEl.value).toFixed(1);
     }
 
-    massEl.addEventListener('input', syncLabels);
-    radiusEl.addEventListener('input', syncLabels);
-    LEl.addEventListener('input', syncLabels);
+    // Live-apply parameter changes to maintain no-slip without requiring Reset
+    function applyNoSlipParams() {
+      paramMass = Number(massEl.value);
+      paramRadius = Number(radiusEl.value);
+      paramL = Number(LEl.value);
+      const I = momentOfInertia(paramMass, paramRadius);
+      omega = I > 0 ? (paramL / I) : 0; // ω = L / I
+      vx = omega * paramRadius;         // v = R · ω
+      // Keep the coin in contact with the ground as R changes
+      coinY = canvas.height - 60 - paramRadius;
+      syncLabels();
+    }
+
+    massEl.addEventListener('input', applyNoSlipParams);
+    radiusEl.addEventListener('input', applyNoSlipParams);
+    LEl.addEventListener('input', applyNoSlipParams);
     timeEl.addEventListener('input', () => { syncLabels(); paramTimeScale = Number(timeEl.value); });
 
     function toggleControls() {
